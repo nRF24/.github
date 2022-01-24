@@ -30,18 +30,6 @@ fi
 
 echo "WARNING: It is advised to remove the previously installed RF24 library first."
 echo $'\t'"This is done to avoid Runtime conflicts."
-if [[ -f "/usr/local/lib/librf24.so" ]]
-then
-    echo "Uninstalling previously install RF24 lib (/usr/local/lib/librf24.so)"
-    sudo rm /usr/local/lib/librf24.*
-    # check for presence of a very old install
-    if [[ -f "/usr/local/lib/librf24-bcm.so" ]]
-    then 
-        sudo rm /usr/local/lib/librf24-bcm.so
-    fi
-    sudo rm -r /usr/local/include/RF24
-fi
-echo $'\n'
 
 if ! command -v git &> /dev/null
 then
@@ -63,7 +51,22 @@ do
     esac
 done
 
-if [[ ${DO_INSTALL[3]} > 0 ]]
+if [[ ${DO_INSTALL[0]} > 0 ]]
+then
+    if [[ -f "/usr/local/lib/librf24.so" ]]
+    then
+        echo "Uninstalling previously install RF24 lib (/usr/local/lib/librf24.so)"
+        sudo rm /usr/local/lib/librf24.*
+        # check for presence of a very old install
+        if [[ -f "/usr/local/lib/librf24-bcm.so" ]]
+        then
+            sudo rm /usr/local/lib/librf24-bcm.so
+        fi
+        sudo rm -r /usr/local/include/RF24
+    fi
+fi
+
+if [[ ${DO_INSTALL[3]} > 0  && ! -f "/usr/lib/$(ls /usr/lib/gcc | tail -1)/libcurses.so" ]]
 then
     answer=""
     read -p "    Install ncurses library, recommended for RF24Gateway [y/N]? " answer
@@ -96,7 +99,7 @@ esac
 # answer=""
 # read -p "Would like to create an installable package [Y/n]? " answer
 # case ${answer^^} in
-#     Y ) 
+#     Y )
 #         if ! command -v rpmbuild &> /dev/null
 #         then
 #             echo "Installing rpm from apt-get"
@@ -136,12 +139,20 @@ install_repo() {
     git checkout ${BRANCHES[$1]}
     create_build_env
     cmake ..
-    make
+    if ! make
+    then
+        echo "Building lib ${REPOS[$1]} failed. Quiting now."
+        exit 1
+    fi
     # if [[ $RUN_CPACK > 0 ]]
     # then
     #     sudo cpack
     # fi
-    sudo make install
+    if ! sudo make install
+    then
+        echo "Installing lib ${REPOS[$1]} failed. Quiting now."
+        exit 1
+    fi
     cd ../../..
     answer=Y
     read -p $'\n'"Do you want to build the ${REPOS[$1]} examples [Y/n]? " answer
@@ -151,7 +162,11 @@ install_repo() {
             cd $ROOT_PATH/${REPOS[$1]}/${EXAMPLE_PATH[$1]}
             create_build_env
             cmake ..
-            make
+            if ! make
+            then
+                echo "Building examples for lib ${REPOS[$1]} failed. Quiting now."
+                exit 1
+            fi
             cd ../../../..
             echo ""
             echo "Complete! To run the example:"
