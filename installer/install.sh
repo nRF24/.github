@@ -1,13 +1,15 @@
 #!/bin/bash
 args=("$@")
 
-ROOT_PATH="~"
 if [[ ${#args[@]} -gt 0 ]]
 then
-    ROOT_PATH=${args[0]}
+    cd ${args[0]}
+else
+    cd ~
+    args[0]="~"
 fi
 
-ROOT_PATH+="/rf24libs"
+ROOT_PATH="rf24libs"
 REPOS=("RF24" "RF24Network" "RF24Mesh" "RF24Gateway")
 DO_INSTALL=("0" "0" "0" "0")
 EXAMPLE_PATH=("examples_linux" "examples_RPi" "examples_RPi" "examples")
@@ -114,7 +116,7 @@ install_repo() {
     then
         git clone https://github.com/nRF24/${REPOS[$1]} $ROOT_PATH/${REPOS[$1]}
     else
-        echo "Using already cloned repo $ROOT_PATH/${REPOS[$1]}"
+        echo "Using already cloned repo ${args[0]}/$ROOT_PATH/${REPOS[$1]}"
     fi
     echo ""
     cd $ROOT_PATH/${REPOS[$1]}
@@ -147,7 +149,7 @@ install_repo() {
             cd ../../../..
             echo ""
             echo "Complete! To run the example:"
-            echo "cd $ROOT_PATH/${REPOS[$1]}/${EXAMPLE_PATH[$1]}/build"
+            echo "cd ${args[0]}/$ROOT_PATH/${REPOS[$1]}/${EXAMPLE_PATH[$1]}/build"
             echo "sudo ./${SUGGESTED_EXAMPLE[$1]}";;
     esac
 }
@@ -163,7 +165,7 @@ done
 echo $'\n\n'"*** Installer Complete ***"
 echo "See http://tmrh20.github.io for documentation"
 echo "See http://tmrh20.blogspot.com for info "
-echo $'\n'"Listing repositories in $ROOT_PATH"
+echo $'\n'"Listing repositories in ${args[0]}/$ROOT_PATH"
 ls ${ROOT_PATH}
 
 # clean up env var
