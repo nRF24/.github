@@ -21,15 +21,12 @@ echo "report issues at https://github.com/nRF24/RF24/issues"
 echo $'\n'"******************** NOTICE **********************"
 echo "This installer will create a 'rf24libs' folder for installation of selected libraries"
 echo "To prevent mistaken deletion, users must manually delete existing library folders within 'rf24libs' if upgrading"
-echo "Run 'sudo rm -r rf24libs' to clear the entire directory"
+echo "Run 'sudo rm -r $ROOT_PATH' to clear the entire directory"
 if [[ ! -d $ROOT_PATH ]]
 then
     echo $'\n'"Creating $ROOT_PATH folder."
     mkdir $ROOT_PATH
 fi
-
-echo "WARNING: It is advised to remove the previously installed RF24 library first."
-echo $'\t'"This is done to avoid Runtime conflicts."
 
 if ! command -v git &> /dev/null
 then
@@ -44,7 +41,6 @@ fi
 
 for index in "${!REPOS[@]}"
 do
-    answer=""
     read -p "Do you want to install the ${REPOS[index]} library, [y/N]? " answer
     case ${answer^^} in
         Y ) DO_INSTALL[index]=1;;
@@ -53,9 +49,11 @@ done
 
 if [[ ${DO_INSTALL[0]} > 0 ]]
 then
+    echo "WARNING: It is advised to remove the previously installed RF24 library first."
+    echo $'\t'"This is done to avoid Runtime conflicts."
     if [[ -f "/usr/local/lib/librf24.so" ]]
     then
-        echo "Uninstalling previously install RF24 lib (/usr/local/lib/librf24.so)"
+        echo "Uninstalling previously installed RF24 lib (/usr/local/lib/librf24.so)"
         sudo rm /usr/local/lib/librf24.*
         # check for presence of a very old install
         if [[ -f "/usr/local/lib/librf24-bcm.so" ]]
@@ -68,7 +66,6 @@ fi
 
 if [[ ${DO_INSTALL[3]} > 0  && ! -f "/usr/lib/$(ls /usr/lib/gcc | tail -1)/libcurses.so" ]]
 then
-    answer=""
     read -p "    Install ncurses library, recommended for RF24Gateway [y/N]? " answer
     case ${answer^^} in
         Y ) sudo apt-get install libncurses5-dev;;
@@ -79,12 +76,11 @@ fi
 
 echo "*** Which hardware driver library do you wish to use? ***"
 echo "1. BCM2835 Driver (aka RPi)"
-echo "2. SPIDEV (Most Compatibe, Default)"
+echo "2. SPIDEV (most compatible, Default)"
 echo "3. WiringPi (support deprecated)"
 echo "4. MRAA (Intel Devices)"
 echo "5. PiGPIO"
 echo "6. LittleWire"
-answer=""
 read answer
 case ${answer^^} in
     1) RF24DRIVER+="RPi";;
@@ -95,19 +91,6 @@ case ${answer^^} in
     6) RF24DRIVER+="LittleWire";;
     *) RF24DRIVER+="SPIDEV";;
 esac
-
-# answer=""
-# read -p "Would like to create an installable package [Y/n]? " answer
-# case ${answer^^} in
-#     Y )
-#         if ! command -v rpmbuild &> /dev/null
-#         then
-#             echo "Installing rpm from apt-get"
-#             sudo apt-get install rpm
-#         fi
-#         RUN_CPACK=1;;
-#     N ) RUN_CPACK=0;;
-# esac
 
 # set an env var for easier reuse (specific to RF24 repos).
 # Any applicable CMakeLists.txt is configured to use this when it is set.
@@ -127,7 +110,6 @@ create_build_env() {
 # array index is a required arg
 install_repo() {
     echo $'\n'"Installing ${REPOS[$1]} Repo..."
-    echo ""
     if [[ ! -d "$ROOT_PATH/${REPOS[$1]}" ]]
     then
         git clone https://github.com/nRF24/${REPOS[$1]} $ROOT_PATH/${REPOS[$1]}
@@ -144,17 +126,12 @@ install_repo() {
         echo "Building lib ${REPOS[$1]} failed. Quiting now."
         exit 1
     fi
-    # if [[ $RUN_CPACK > 0 ]]
-    # then
-    #     sudo cpack
-    # fi
     if ! sudo make install
     then
         echo "Installing lib ${REPOS[$1]} failed. Quiting now."
         exit 1
     fi
     cd ../../..
-    answer=Y
     read -p $'\n'"Do you want to build the ${REPOS[$1]} examples [Y/n]? " answer
     case ${answer^^} in
         N ) ;;
@@ -183,12 +160,10 @@ do
     fi
 done
 
-echo $'\n\n'
-echo "*** Installer Complete ***"
+echo $'\n\n'"*** Installer Complete ***"
 echo "See http://tmrh20.github.io for documentation"
 echo "See http://tmrh20.blogspot.com for info "
-echo ""
-echo "Listing repositories in $ROOT_PATH"
+echo $'\n'"Listing repositories in $ROOT_PATH"
 ls ${ROOT_PATH}
 
 # clean up env var
