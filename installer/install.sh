@@ -16,7 +16,7 @@ EXAMPLE_PATH=("examples_linux" "examples_RPi" "examples_RPi" "examples")
 SUGGESTED_EXAMPLE=("gettingstarted" "helloworld_tx" "RF24Mesh_Example_Master" "RF24Gateway_ncurses")
 
 # TODO Remove this when ready for master branches (or improve it via CLI args)
-BRANCHES=("pigpio" "pigpio-support" "pigpio-support" "pigpio-support")
+BRANCHES=("master" "master" "master" "master")
 
 echo $'\n'"RF24 libraries installer by TMRh20 and 2bndy5"
 echo "report issues at https://github.com/nRF24/RF24/issues"
@@ -162,6 +162,26 @@ do
     fi
 done
 
+INSTALL_PYRF24="N"
+read -p "Would you like to install the unified python wrapper package (pyrf24) [y/N]?" INSTALL_PYRF24
+case ${INSTALL_PYRF24^^} in
+    Y )
+        if [[ ! -d "$ROOT_PATH/pyRF24" ]]
+        then
+            git clone https://github.com/nRF24/pyRF24 $ROOT_PATH/pyRF24
+        else
+            echo "Using already cloned repo ${args[0]}/$ROOT_PATH/pyRF24"
+        fi
+        cd $ROOT_PATH/pyRF24
+        echo $'\nInitializing frozen submodules\n'
+        git submodule update --init
+        echo $'\nInstalling build prequisites.\n'
+        python -m pip install -r requirements.txt
+        echo $'\nInstalling pyrf24 package.\n'
+        python setup.py install
+        cd ../../
+        ;;
+esac
 echo $'\n\n'"*** Installer Complete ***"
 echo "See http://tmrh20.github.io for documentation"
 echo "See http://tmrh20.blogspot.com for info "
