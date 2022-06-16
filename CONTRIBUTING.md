@@ -6,7 +6,7 @@ These are the current requirements for getting your code included in nRF24 libra
 
 - Definitely follow [PEP-8](https://www.python.org/dev/peps/pep-0008/) if it's Python code.
 
-- Follow the [Arduino IDE formatting style](https://www.arduino.cc/en/Reference/StyleGuide) for Arduino examples.
+- Follow the [Arduino example formatting style](https://docs.arduino.cc/learn/contributions/arduino-writing-style-guide) for Arduino examples.
 
 - Add [Doxygen-compatible documentation](https://www.doxygen.nl/manual/docblocks.html) to any new functions you add, or update existing documentation if you change behavior.
 
