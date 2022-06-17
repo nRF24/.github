@@ -2,7 +2,7 @@
 We use [clang-format v12](https://releases.llvm.org/12.0.0/tools/clang/docs/ClangFormatStyleOptions.html)
 to conform our code style according to the rules outlined below.
 
-@note These rules are applied to any C/C++ source code that is not Arduino example code. For the code style used in the Arduino examples, please refer to our Arduino code style guidelines.
+@note These rules are applied to any C/C++ source code that is not Arduino example code. For the code style used in the Arduino examples, please refer to the [Arduino example formatting style guide](https://docs.arduino.cc/learn/contributions/arduino-writing-style-guide).
 
 - Indentation should always be 4 spaces (don't use tab characters)
 - Line endings can be whatever your system defaults to. We have configured git to convert
