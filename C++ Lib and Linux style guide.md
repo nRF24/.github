@@ -112,17 +112,14 @@ while (true) {}
 while (true) { continue; }
 ```
 
-## `AllowShortCaseLabelsOnASingleLine: false`
+## `AllowShortCaseLabelsOnASingleLine: true`
 
-Short case labels should always get their own separate line(s).
+Short case labels should be on single line.
 
 ```cpp
 switch (a) {
-case 1:
-    x = 1;
-    break;
-case 2:
-    return;
+    case 1: x = 1; break;
+    case 2: return;
 }
 ```
 
