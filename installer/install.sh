@@ -177,8 +177,14 @@ case ${INSTALL_PYRF24^^} in
         git submodule update --init
         echo $'\nInstalling build prequisites.\n'
         python -m pip install -r requirements.txt
+        # endure there are no previous wheels in the dist/ folder
+        if [[ -d "$ROOT_PATH/pyRF24/dist" ]]
+        then
+            rm -r dist/
+        fi
         echo $'\nInstalling pyrf24 package.\n'
-        python setup.py install
+        python setup.py bdist_wheel
+        python -m pip install dist/pyrf24*.whl
         cd ../../
         ;;
 esac
