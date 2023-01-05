@@ -23,7 +23,7 @@ jobs:
       - name: install doxygen from SF binary archives
         env:
           DOXYGEN_VERSION: '1.9.6'
-        working-directory: '$HOME'
+        working-directory: '~/'
         run: |
           mkdir doxygen && cd doxygen
           curl -L https://sourceforge.net/projects/doxygen/files/rel-$DOXYGEN_VERSION/doxygen-$DOXYGEN_VERSION.linux.bin.tar.gz > doxygen.tar.gz
