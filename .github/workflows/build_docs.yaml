@@ -13,10 +13,6 @@ on:
         required: false
         default: false
         type: boolean
-    secrets:
-      envPAT:
-        required: true
-
 
 jobs:
   build-doxygen:
