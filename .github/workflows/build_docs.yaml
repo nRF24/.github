@@ -30,7 +30,7 @@ jobs:
           tar xf doxygen.tar
           cd doxygen-$DOXYGEN_VERSION
           sudo make install
-
+      - uses: actions/checkout@v3
       - name: overwrite doxygen tags
         working-directory: docs
         run: |
