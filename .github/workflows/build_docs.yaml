@@ -36,7 +36,7 @@ jobs:
         run: |
           touch doxygenAction
           echo "PROJECT_NUMBER = ${{ inputs.lib-version }}" >> doxygenAction
-          echo "@INCLUDE = doxygenAction" >> Doxyfile
+          echo -e "\n@INCLUDE = doxygenAction" >> Doxyfile
 
       - run: doxygen
         working-directory: docs
