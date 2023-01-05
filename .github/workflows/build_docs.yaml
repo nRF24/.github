@@ -13,6 +13,10 @@ on:
         required: false
         default: false
         type: boolean
+      deploy-gh-pages:
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build-doxygen:
@@ -78,3 +82,19 @@ jobs:
         with:
           name: ${{ inputs.repo-name }}_sphinx_docs
           path: ${{ github.workspace }}/docs/_build
+
+  deploy-docs:
+    runs-on: ubuntu-latest
+    needs: [build-doxygen]
+    if: inputs.deploy-gh-pages
+    steps:
+      - name: downlod artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.repo-name }}_doxygen_docs
+          path: docs
+      - name: upload to github pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
