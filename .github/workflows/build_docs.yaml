@@ -21,6 +21,7 @@ on:
 jobs:
   build-doxygen:
     runs-on: ubuntu-latest
+    steps:
       - name: install Doxygen static libclang deps
         run: sudo apt-get install libclang1-12 libclang-cpp12
       - name: install doxygen from SF binary archives
@@ -55,6 +56,7 @@ jobs:
     if: inputs.mk-sphinx
     needs: [build-doxygen]
     runs-on: ubuntu-latest
+    steps:
       - uses: actions/setup-python@v4
         with:
           python-version: 3.x
