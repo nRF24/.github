@@ -1,0 +1,70 @@
+name: Build Docs
+
+on:
+  workflow_call:
+    inputs:
+      repo-name:
+        required: true
+        type: string
+      lib-version:
+        required: true
+        type: string
+      mk-sphinx:
+        required: false
+        default: false
+        type: boolean
+    secrets:
+      envPAT:
+        required: true
+
+
+jobs:
+  build-doxygen:
+    runs-on: ubuntu-latest
+      - name: install Doxygen static libclang deps
+        run: sudo apt-get install libclang1-12 libclang-cpp12
+      - name: install doxygen from SF binary archives
+        env:
+          DOXYGEN_VERSION: '1.9.6'
+        working-directory: '$HOME'
+        run: |
+          mkdir doxygen && cd doxygen
+          curl -L https://sourceforge.net/projects/doxygen/files/rel-$DOXYGEN_VERSION/doxygen-$DOXYGEN_VERSION.linux.bin.tar.gz > doxygen.tar.gz
+          gunzip doxygen.tar.gz
+          tar xf doxygen.tar
+          cd doxygen-$DOXYGEN_VERSION
+          sudo make install
+
+      - name: overwrite doxygen tags
+        working-directory: docs
+        run: |
+          touch doxygenAction
+          echo "PROJECT_NUMBER = ${{ inputs.lib-version }}" >> doxygenAction
+          echo "@INCLUDE = doxygenAction" >> Doxyfile
+
+      - run: doxygen
+        working-directory: docs
+
+      - name: Save doxygen docs as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ inputs.repo-name }}_doxygen_docs
+          path: ${{ github.workspace }}/docs/html
+
+  build-sphinx:
+    if: inputs.mk-sphinx
+    needs: [build-doxygen]
+    runs-on: ubuntu-latest
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+      - name: Install sphinx deps
+        run: python -m pip install -r docs/sphinx/requirements.txt
+      - name: build docs with Sphinx
+        working-directory: docs
+        run: sphinx-build sphinx _build
+      - name: Save sphinx docs as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ inputs.repo-name }}_sphinx_docs
+          path: ${{ github.workspace }}/docs/_build
