@@ -19,7 +19,7 @@ jobs:
       - name: get lib info
         id: lib-info
         run: |
-          echo "name=$(echo 'nrf24/RF24' | sed -e 's;.\+/;;')" >> $GITHUB_OUTPUT
+          echo "name=$(echo ${{ github.repository }} | sed -e 's;.\+/;;')" >> $GITHUB_OUTPUT
           echo "release=$(awk -F "=" '/version/ {print $2}' library.properties)" >> $GITHUB_OUTPUT
 
       - name: Set up Python
