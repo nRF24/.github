@@ -72,50 +72,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
 
-      - name: provide MRAA
-        if: ${{ inputs.driver == 'MRAA' }}
-        run: |
-          git clone https://github.com/intel-iot-devkit/mraa.git
-          cd mraa
-          mkdir build
-          cd build
-          cmake .. -D BUILDSWIGNODE=OFF \
-          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr-dir }} \
-          -D CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/cmake/toolchains/${{ inputs.compiler }}.cmake
-          sudo make install
-
-      - name: provide WiringPi
-        if: ${{ inputs.driver == 'wiringPi' && inputs.compiler == 'default' }}
-        run: |
-          git clone https://github.com/WiringPi/WiringPi
-          cd WiringPi
-          ./build
-
-      # - name: provide WiringPi (with toolchain compilers)
-      #   if: ${{ inputs.driver == 'wiringPi' && inputs.compiler != 'default' }}
-      #   env:
-      #     CC: /usr/bin/${{ inputs.usr-dir }}-gcc
-      #     CFLAGS: "-I/usr/${{ inputs.usr-dir }}"
-      #   run: |
-      #     git clone https://github.com/WiringPi/WiringPi
-      #     cd WiringPi
-      #     ./build
-
-      - name: provide pigpio
-        if: inputs.driver == 'pigpio'
-        run: |
-          git clone https://github.com/joan2937/pigpio.git
-          cd pigpio
-          git fetch --tags
-          latestTag=$(git describe --tags `git rev-list --tags --max-count=1`)
-          git checkout $latestTag
-          mkdir build
-          cd build
-          cmake .. -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr-dir }} \
-          -D CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/cmake/toolchains/${{ inputs.compiler }}.cmake
-          make
-          sudo make install
-
       - name: get repo info
         id: lib-info
         run: |
@@ -135,6 +91,50 @@ jobs:
           repository: nRF24/RF24
           path: RF24
           ref: ${{ inputs.rf24-ref }}
+
+      - name: provide MRAA
+        if: inputs.driver == 'MRAA'
+        run: |
+          git clone https://github.com/intel-iot-devkit/mraa.git
+          cd mraa
+          mkdir build
+          cd build
+          cmake .. -D BUILDSWIGNODE=OFF \
+          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr-dir }} \
+          -D CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/RF24/cmake/toolchains/${{ inputs.compiler }}.cmake
+          sudo make install
+
+      - name: provide WiringPi
+        if: inputs.driver == 'wiringPi' && inputs.compiler == 'default'
+        run: |
+          git clone https://github.com/WiringPi/WiringPi
+          cd WiringPi
+          ./build
+
+      # - name: provide WiringPi (with toolchain compilers)
+      #   if: inputs.driver == 'wiringPi' && inputs.compiler != 'default'
+      #   env:
+      #     CC: /usr/bin/${{ inputs.usr-dir }}-gcc
+      #     CFLAGS: "-I/usr/${{ inputs.usr-dir }}"
+      #   run: |
+      #     git clone https://github.com/WiringPi/WiringPi
+      #     cd WiringPi
+      #     ./build
+
+      - name: provide pigpio
+        if: inputs.driver == 'pigpio'
+        run: |
+          git clone https://github.com/joan2937/pigpio.git
+          cd pigpio
+          git fetch --tags
+          latestTag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          git checkout $latestTag
+          mkdir build
+          cd build
+          cmake .. -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr-dir }} \
+          -D CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/RF24/cmake/toolchains/${{ inputs.compiler }}.cmake
+          make
+          sudo make install
 
       - name: build & install RF24
         if: endsWith(github.repository, 'RF24') == false
