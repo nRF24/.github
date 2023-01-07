@@ -80,7 +80,7 @@ jobs:
           mkdir build
           cd build
           cmake .. -D BUILDSWIGNODE=OFF \
-          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr_dir }} \
+          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr-dir }} \
           -D CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/cmake/toolchains/${{ inputs.compiler }}.cmake
           sudo make install
 
@@ -94,8 +94,8 @@ jobs:
       # - name: provide WiringPi (with toolchain compilers)
       #   if: ${{ inputs.driver == 'wiringPi' && inputs.compiler != 'default' }}
       #   env:
-      #     CC: /usr/bin/${{ inputs.usr_dir }}-gcc
-      #     CFLAGS: "-I/usr/${{ inputs.usr_dir }}"
+      #     CC: /usr/bin/${{ inputs.usr-dir }}-gcc
+      #     CFLAGS: "-I/usr/${{ inputs.usr-dir }}"
       #   run: |
       #     git clone https://github.com/WiringPi/WiringPi
       #     cd WiringPi
@@ -111,7 +111,7 @@ jobs:
           git checkout $latestTag
           mkdir build
           cd build
-          cmake .. -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr_dir }} \
+          cmake .. -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr-dir }} \
           -D CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/cmake/toolchains/${{ inputs.compiler }}.cmake
           make
           sudo make install
@@ -143,7 +143,7 @@ jobs:
           mkdir build
           cd build
           cmake .. -D CMAKE_BUILD_TYPE=$BUILD_TYPE \
-          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr_dir }} \
+          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr-dir }} \
           -D CMAKE_TOOLCHAIN_FILE=cmake/toolchains/${{ inputs.compiler }}.cmake
           sudo make install
 
@@ -162,7 +162,7 @@ jobs:
           mkdir build
           cd build
           cmake .. -D CMAKE_BUILD_TYPE=$BUILD_TYPE \
-          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr_dir }} \
+          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr-dir }} \
           -D CMAKE_TOOLCHAIN_FILE=cmake/toolchains/${{ inputs.compiler }}.cmake
           sudo make install
 
@@ -181,7 +181,7 @@ jobs:
           mkdir build
           cd build
           cmake .. -D CMAKE_BUILD_TYPE=$BUILD_TYPE \
-          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr_dir }} \
+          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr-dir }} \
           -D CMAKE_TOOLCHAIN_FILE=cmake/toolchains/${{ inputs.compiler }}.cmake
           sudo make install
 
@@ -201,7 +201,7 @@ jobs:
         working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
         run: |
           cmake .. -D CMAKE_BUILD_TYPE=$BUILD_TYPE \
-          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr_dir }} \
+          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr-dir }} \
           -D CMAKE_TOOLCHAIN_FILE=cmake/toolchains/${{ inputs.compiler }}.cmake
 
       - name: build lib
