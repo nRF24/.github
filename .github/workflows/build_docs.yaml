@@ -3,9 +3,6 @@ name: Build Docs
 on:
   workflow_call:
     inputs:
-      repo-name:
-        required: true
-        type: string
       lib-version:
         required: true
         type: string
@@ -20,6 +17,10 @@ jobs:
   build-doxygen:
     runs-on: ubuntu-latest
     steps:
+      - name: get repo info
+        id: lib-info
+        run: echo "name=$(echo ${{ github.repository }} | sed 's;.\+/;;')" >> $GITHUB_OUTPUT
+
       - name: install Doxygen static libclang deps
         run: sudo apt-get install libclang1-12 libclang-cpp12
 
@@ -48,14 +49,14 @@ jobs:
       - name: Save doxygen docs as artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ inputs.repo-name }}_doxygen_docs
+          name: ${{ steps.lib-info.outputs.name }}_doxygen_docs
           path: ${{ github.workspace }}/docs/html
 
       - name: Save doxygen XML as artifact
         if: inputs.mk-sphinx
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ inputs.repo-name }}_doxygen_xml
+          name: ${{ steps.lib-info.outputs.name }}_doxygen_xml
           path: ${{ github.workspace }}/docs/sphinx/xml
 
   build-sphinx:
@@ -63,6 +64,10 @@ jobs:
     needs: [build-doxygen]
     runs-on: ubuntu-latest
     steps:
+      - name: get repo info
+        id: lib-info
+        run: echo "name=$(echo ${{ github.repository }} | sed 's;.\+/;;')" >> $GITHUB_OUTPUT
+
       - uses: actions/setup-python@v4
         with:
           python-version: 3.x
@@ -72,7 +77,7 @@ jobs:
       - name: download XML artifact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ inputs.repo-name }}_doxygen_xml
+          name: ${{ steps.lib-info.outputs.name }}_doxygen_xml
           path: ${{ github.workspace }}/docs/sphinx/xml
       
       - name: Install sphinx deps
@@ -85,7 +90,7 @@ jobs:
       - name: Save sphinx docs as artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ inputs.repo-name }}_sphinx_docs
+          name: ${{ steps.lib-info.outputs.name }}_sphinx_docs
           path: ${{ github.workspace }}/docs/_build
 
   deploy-docs:
@@ -93,10 +98,14 @@ jobs:
     needs: [build-doxygen]
     if: inputs.deploy-gh-pages
     steps:
+      - name: get repo info
+        id: lib-info
+        run: echo "name=$(echo ${{ github.repository }} | sed 's;.\+/;;')" >> $GITHUB_OUTPUT
+
       - name: downlod artifact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ inputs.repo-name }}_doxygen_docs
+          name: ${{ steps.lib-info.outputs.name }}_doxygen_docs
           path: docs
 
       - name: upload to github pages

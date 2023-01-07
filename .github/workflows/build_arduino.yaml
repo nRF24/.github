@@ -60,7 +60,7 @@ on:
           ```
       enable-deltas-report:
         required: false
-        type: booean
+        type: boolean
       reports-path:
         required: false
         type: string

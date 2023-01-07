@@ -7,20 +7,20 @@ on:
         required: true
         type: string
       rf24-ref:
+        required: false
+        type: string
+        default: master
         description: git ref of the RF24 lib dependency
-        required: false
-        type: string
-        default: master
       rf24network-ref:
+        required: false
+        type: string
+        default: master
         description: git ref of the RF24Network lib dependency
-        required: false
-        type: string
-        default: master
       rf24mesh-ref:
-        description: git ref of the RF24Mesh lib dependency
         required: false
         type: string
         default: master
+        description: git ref of the RF24Mesh lib dependency
 
 
 jobs:

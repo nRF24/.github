@@ -5,12 +5,12 @@ on:
     inputs:
       driver:
         required: false
-        default: SPIDEV
         type: string
+        default: SPIDEV
       compiler:
         required: false
-        default: default
         type: string
+        default: default
       usr-dir:
         required: false
         default: local
@@ -25,20 +25,20 @@ on:
         required: false
         type: string
       rf24-ref:
+        required: false
+        type: string
+        default: master
         description: git ref of the RF24 lib dependency
-        default: master
-        required: false
-        type: string
       rf24network-ref:
+        required: false
+        type: string
+        default: master
         description: git ref of the RF24Network lib dependency
-        default: master
-        required: false
-        type: string
       rf24mesh-ref:
-        description: git ref of the RF24Mesh lib dependency
-        default: master
         required: false
         type: string
+        default: master
+        description: git ref of the RF24Mesh lib dependency
 
 jobs:
   build:
@@ -71,6 +71,50 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+
+      - name: provide MRAA
+        if: ${{ inputs.driver == 'MRAA' }}
+        run: |
+          git clone https://github.com/intel-iot-devkit/mraa.git
+          cd mraa
+          mkdir build
+          cd build
+          cmake .. -D BUILDSWIGNODE=OFF \
+          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr_dir }} \
+          -D CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/cmake/toolchains/${{ inputs.compiler }}.cmake
+          sudo make install
+
+      - name: provide WiringPi
+        if: ${{ inputs.driver == 'wiringPi' && inputs.compiler == 'default' }}
+        run: |
+          git clone https://github.com/WiringPi/WiringPi
+          cd WiringPi
+          ./build
+
+      # - name: provide WiringPi (with toolchain compilers)
+      #   if: ${{ inputs.driver == 'wiringPi' && inputs.compiler != 'default' }}
+      #   env:
+      #     CC: /usr/bin/${{ inputs.usr_dir }}-gcc
+      #     CFLAGS: "-I/usr/${{ inputs.usr_dir }}"
+      #   run: |
+      #     git clone https://github.com/WiringPi/WiringPi
+      #     cd WiringPi
+      #     ./build
+
+      - name: provide pigpio
+        if: inputs.driver == 'pigpio'
+        run: |
+          git clone https://github.com/joan2937/pigpio.git
+          cd pigpio
+          git fetch --tags
+          latestTag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          git checkout $latestTag
+          mkdir build
+          cd build
+          cmake .. -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr_dir }} \
+          -D CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/cmake/toolchains/${{ inputs.compiler }}.cmake
+          make
+          sudo make install
 
       - name: get repo info
         id: lib-info

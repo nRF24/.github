@@ -13,9 +13,8 @@ on:
         default: c,h,cpp,hpp
 
 jobs:
-  check_formatting:
+  cpp_linter:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4

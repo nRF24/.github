@@ -10,26 +10,26 @@ on:
         required: true
         type: string
       lib-deps:
+        required: false
+        type: string
         description: |
           A space delimited string of lib names to install as extra dependencies.
           NOTE: RF24 dependencies are automatically installed accordingly.
-        required: false
-        type: string
       rf24-ref:
+        required: false
+        type: string
+        default: master
         description: git ref of the RF24 lib dependency
-        default: master
-        required: false
-        type: string
       rf24network-ref:
+        required: false
+        type: string
+        default: master
         description: git ref of the RF24Network lib dependency
-        default: master
-        required: false
-        type: string
       rf24mesh-ref:
-        description: git ref of the RF24Mesh lib dependency
-        default: master
         required: false
         type: string
+        default: master
+        description: git ref of the RF24Mesh lib dependency
 
 
 jobs:
