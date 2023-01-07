@@ -78,9 +78,9 @@ jobs:
           lib_name=$(echo ${{ github.repository }} | sed 's;.\+/;;')
           echo "name=$lib_name" >> $GITHUB_OUTPUT
           lib_deps=''
-          if [[ '$lib_name' == 'RF24Mesh' ]]; then
+          if [[ $lib_name == 'RF24Mesh' ]]; then
               lib_deps='RF24Network'
-          elif [[ '$lib_name' == 'RF24Gateway' ]]; then
+          elif [[ $lib_name == 'RF24Gateway' ]]; then
               lib_deps='RF24Network;RF24Mesh'
           fi
           echo "deps=$lib_deps" >> $GITHUB_OUTPUT
