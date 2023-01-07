@@ -1,0 +1,96 @@
+name: Run PlatformIO in CI
+
+on:
+  workflow_call:
+    inputs:
+      example-path:
+        required: true
+        type: string
+      board-id:
+        required: true
+        type: string
+      lib-deps:
+        description: |
+          A space delimited string of lib names to install as extra dependencies.
+          NOTE: RF24 dependencies are automatically installed accordingly.
+        required: false
+        type: string
+      rf24-ref:
+        description: git ref of the RF24 lib dependency
+        default: master
+        required: false
+        type: string
+      rf24network-ref:
+        description: git ref of the RF24Network lib dependency
+        default: master
+        required: false
+        type: string
+      rf24mesh-ref:
+        description: git ref of the RF24Mesh lib dependency
+        default: master
+        required: false
+        type: string
+
+
+jobs:
+  run_pio:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v3
+        with:
+          path: ~/.platformio
+          key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - uses: actions/checkout@v3
+
+      - name: get lib info
+        id: lib-info
+        run: |
+          lib_name=$(echo 'nrf24/RF24' | sed -e 's;.\+/;;')
+          rf24_deps=''
+          if [[ $lib_name == 'RF24Mesh' ]]; then
+            rf24_deps=RF24Network
+          elif [[ $lib_name == 'RF24Ethernet' ]]; then
+            rf24_deps=RF24Network;RF24Mesh
+          fi
+          echo "rf24-deps=$rf24_deps" >> $GITHUB_OUTPUT
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade platformio
+
+      - name: Install RF24 library dependency
+        if: endsWith(github.repository, 'RF24') == false
+        run: pio lib -g install 'https://github.com/nRF24/RF24.git#${{ inputs.rf24_ref }}'
+
+      - name: Install RF24Network library dependency
+        if: contains(steps.lib-info.outputs.rf24-deps, 'RF24Network') && !endsWith(github.repository, 'RF24Network')
+        run: pio lib -g install 'https://github.com/nRF24/RF24Network.git#${{ inputs.rf24network_ref }}'
+
+      - name: Install RF24Mesh library dependency
+        if: contains(steps.lib-info.outputs.rf24-deps, 'RF24Mesh') && !endsWith(github.repository, 'RF24Mesh')
+        run: pio lib -g install 'https://github.com/nRF24/RF24Mesh.git#${{ inputs.rf24mesh_ref }}'
+
+      - name: Install extra dependencies
+        if: inputs.lib-deps != ''
+        run: pio lib -g install ${{ inputs.lib-deps }}
+
+      - name: Run PlatformIO
+        run: pio ci --lib="." --board=${{ inputs.board-id }}
+        env:
+          PLATFORMIO_CI_SRC: ${{ inputs.example-path }}

@@ -1,0 +1,232 @@
+name: Build lib with Cmake
+
+on:
+  workflow_call:
+    inputs:
+      driver:
+        required: false
+        default: SPIDEV
+        type: string
+      compiler:
+        required: false
+        default: default
+        type: string
+      usr-dir:
+        required: false
+        default: local
+        type: string
+      examples-path:
+        required: false
+        type: string
+      deploy-release:
+        required: false
+        type: boolean
+      py-wrapper-path:
+        required: false
+        type: string
+      rf24-ref:
+        description: git ref of the RF24 lib dependency
+        default: master
+        required: false
+        type: string
+      rf24network-ref:
+        description: git ref of the RF24Network lib dependency
+        default: master
+        required: false
+        type: string
+      rf24mesh-ref:
+        description: git ref of the RF24Mesh lib dependency
+        default: master
+        required: false
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      RF24_DRIVER: ${{ inputs.driver }}
+      # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+      BUILD_TYPE: Release
+    steps:
+      # - name: provide toolchain (for x86_64)
+      #   if: ${{ inputs.compiler == 'x86_64' }}
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install gcc-x86-64-linux-gnux32 g++-x86-64-linux-gnux32
+
+      # - name: provide toolchain (for i686)
+      #   if: ${{ inputs.compiler == 'i686' }}
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install gcc-i686-linux-gnu g++-i686-linux-gnu
+
+      - name: provide toolchain (for arm64)
+        if: ${{ inputs.compiler == 'arm64' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+      - name: provide toolchain (for armhf)
+        if: ${{ inputs.compiler == 'armhf' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+
+      - name: get repo info
+        id: lib-info
+        run: |
+          lib_name=$(echo ${{ github.repository }} | sed 's;.\+/;;')
+          echo "name=$lib_name" >> $GITHUB_OUTPUT
+          lib_deps=''
+          if [[ '$lib_name' == 'RF24Mesh' ]]; then
+              lib_deps='RF24Network'
+          elif [[ '$lib_name' == 'RF24Gateway' ]]; then
+              lib_deps='RF24Network;RF24Mesh'
+          fi
+          echo "deps=$lib_deps" >> $GITHUB_OUTPUT
+
+      - name: checkout RF24
+        uses: actions/checkout@v3
+        with:
+          repository: nRF24/RF24
+          path: RF24
+          ref: ${{ inputs.rf24-ref }}
+
+      - name: build & install RF24
+        if: endsWith(github.repository, 'RF24') == false
+        working-directory: RF24
+        run: |
+          mkdir build
+          cd build
+          cmake .. -D CMAKE_BUILD_TYPE=$BUILD_TYPE \
+          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr_dir }} \
+          -D CMAKE_TOOLCHAIN_FILE=cmake/toolchains/${{ inputs.compiler }}.cmake
+          sudo make install
+
+      - name: checkout RF24Network
+        if: contains(steps.lib-info.outputs.deps, 'RF24Network') || endsWith(github.repository, 'RF24Network')
+        uses: actions/checkout@v3
+        with:
+          repository: nRF24/RF24Network
+          path: RF24Network
+          ref: ${{ inputs.rf24network-ref }}
+
+      - name: build & install RF24Network
+        if: contains(steps.lib-info.outputs.deps, 'RF24Network')
+        working-directory: RF24Network
+        run: |
+          mkdir build
+          cd build
+          cmake .. -D CMAKE_BUILD_TYPE=$BUILD_TYPE \
+          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr_dir }} \
+          -D CMAKE_TOOLCHAIN_FILE=cmake/toolchains/${{ inputs.compiler }}.cmake
+          sudo make install
+
+      - name: checkout RF24Mesh repo
+        if: contains(steps.lib-info.outputs.deps, 'RF24Mesh') || endsWith(github.repository, 'RF24Mesh')
+        uses: actions/checkout@v3
+        with:
+          repository: nRF24/RF24Mesh
+          path: RF24Mesh
+          ref: ${{ inputs.rf24mesh-ref }}
+
+      - name: build & install RF24Mesh
+        working-directory: RF24Mesh
+        if: contains(steps.lib-info.outputs.deps, 'RF24Mesh')
+        run: |
+          mkdir build
+          cd build
+          cmake .. -D CMAKE_BUILD_TYPE=$BUILD_TYPE \
+          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr_dir }} \
+          -D CMAKE_TOOLCHAIN_FILE=cmake/toolchains/${{ inputs.compiler }}.cmake
+          sudo make install
+
+      - name: checkout RF24Gateway repo
+        if: endsWith(github.repository, 'RF24Gateway')
+        uses: actions/checkout@v3
+        with:
+          repository: nRF24/RF24Gateway
+          fetch-depth: 0  # for version number fetching in cmake
+          path: RF24Gateway
+          ref: ${{ github.sha }}
+
+      - name: create CMake build environment
+        run: cmake -E make_directory ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+
+      - name: configure lib
+        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+        run: |
+          cmake .. -D CMAKE_BUILD_TYPE=$BUILD_TYPE \
+          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr_dir }} \
+          -D CMAKE_TOOLCHAIN_FILE=cmake/toolchains/${{ inputs.compiler }}.cmake
+
+      - name: build lib
+        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+        run: cmake --build .
+
+      - name: install lib
+        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+        run: sudo cmake --install .
+
+      - name: package lib
+        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+        run: sudo cpack
+
+      - name: Save artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: pkg_${{ steps.lib-info.outputs.name }}
+          path: |
+            ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build/pkgs/*.deb
+            ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build/pkgs/*.rpm
+
+      - name: Upload Release assets
+        if: inputs.deploy-release
+        uses: shogo82148/actions-upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: "${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build/pkgs/librf24*"
+
+      - name: clean build environment
+        if: inputs.examples-path != ''
+        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+        run: sudo rm -r ./*
+
+      - name: configure examples
+        if: inputs.examples-path != ''
+        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+        run: |
+          cmake ../${{ inputs.examples-path }} \
+          -D CMAKE_TOOLCHAIN_FILE=../cmake/toolchains/${{ inputs.compiler }}.cmake
+
+      - name: build examples
+        if: inputs.examples-path != ''
+        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+        # doesn't build the RF24Mesh_Ncurses_Master example because we haven't cross-compiled it in this workflow
+        run: cmake --build .
+
+      # cross-compiling a python C extension is better done with pypa/cibuildwheel action
+      - name: Set up Python 3.7
+        if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.7
+
+      - name: provide python wrapper prerequisites
+        if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
+        # python3-rpi.gpio is only required for physical hardware (namely the IRQ example)
+        run: sudo apt-get install python3-dev libboost-python-dev python3-setuptools
+
+      - name: create alias symlink to libboost_python3*.so
+        if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
+        run: sudo ln -s $(ls /usr/lib/$(ls /usr/lib/gcc | tail -1)/libboost_python3*.so | tail -1) /usr/lib/$(ls /usr/lib/gcc | tail -1)/libboost_python3.so
+
+      - name: build python wrapper
+        if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
+        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/${{ inputs.py-wrapper-path }}
+        run: python3 setup.py build
+
+      - name: install python wrapper
+        if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
+        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/${{ inputs.py-wrapper-path }}
+        run: sudo python3 setup.py install

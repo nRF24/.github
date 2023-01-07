@@ -2,13 +2,12 @@ name: Validate and deploy PlatformIO
 on:
   workflow_call:
     inputs:
-      repo-name:
-        required: true
-        type: string
       deploy-release:
         required: false
-        default: false
         type: boolean
+    secrets:
+      PLATFORMIO_AUTH_TOKEN:
+        required: false
 
 jobs:
   validate_lib_json:
@@ -17,9 +16,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: get latest release version number
-        id: latest_ver
-        run: echo "release=$(awk -F "=" '/version/ {print $2}' library.properties)" >> $GITHUB_OUTPUT
+      - name: get lib info
+        id: lib-info
+        run: |
+          echo "name=$(echo 'nrf24/RF24' | sed -e 's;.\+/;;')" >> $GITHUB_OUTPUT
+          echo "release=$(awk -F "=" '/version/ {print $2}' library.properties)" >> $GITHUB_OUTPUT
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -32,12 +33,12 @@ jobs:
           pip install --upgrade platformio
 
       - name: package lib
-        run: pio package pack -o PlatformIO-${{ inputs.repo-name }}-${{ steps.latest_ver.outputs.release }}.tar.gz
+        run: pio package pack -o PlatformIO-${{ steps.lib-info.outputs.name }}-${{ steps.lib-info.outputs.release }}.tar.gz
 
       - name: Save artifact
         uses: actions/upload-artifact@v3
         with:
-          name: PIO_pkg_${{ inputs.repo-name }}
+          name: PIO_pkg_${{ steps.lib-info.outputs.name }}
           path: PlatformIO*.tar.gz
 
       - name: Upload Release assets

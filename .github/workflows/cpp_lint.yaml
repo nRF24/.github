@@ -3,9 +3,14 @@ name: Run clang-format on src changes
 on:
   workflow_call:
     inputs:
-      ignore-pattern:
-        required: true
+      ignore:
+        required: false
         type: string
+        default: .github
+      extensions:
+        required: false
+        type: string
+        default: c,h,cpp,hpp
 
 jobs:
   check_formatting:
@@ -16,7 +21,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: 3.x
-      # Ubuntu 20.04.4 LTS reunners ship with clang-tools v12
+      # Ubuntu 22.04 runners ship with clang-tools v12
       # - name: Install clang-tools
       #   uses: KyleMayes/install-llvm-action@v1
       #   with:
@@ -31,7 +36,7 @@ jobs:
           --style=file \
           --tidy-checks='-*' \
           --files-changed-only='False' \
-          --extensions=ino \
+          --extensions=${{ inputs.extensions }} \
           --ignore='${{ inputs.ignore-pattern }}'
       - name: Linter checks failed?
         if: steps.linter.outputs.checks-failed > 0
