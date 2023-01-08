@@ -27,7 +27,7 @@ jobs:
             echo "release=$(git describe --tags | grep -o -E 'v[0-9]+\.[0-9]+\.[0-9]+')" >> $GITHUB_OUTPUT
           fi
           echo "name=$(echo ${{ github.repository }} | sed 's;.\+/;;')" >> $GITHUB_OUTPUT
-          echo "has-sphinx-docs=$(if [[ -f docs/sphinx ]]; then echo true; else echo false; fi)" >> $GITHUB_OUTPUT
+          echo "has-sphinx-docs=$(if [[ -d docs/sphinx ]]; then echo true; else echo false; fi)" >> $GITHUB_OUTPUT
 
   build-doxygen:
     runs-on: ubuntu-latest
