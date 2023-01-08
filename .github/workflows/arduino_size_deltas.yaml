@@ -1,0 +1,23 @@
+name: Arduino Size Deltas
+
+on:
+  workflow_call:
+    inputs:
+      reports-path:
+        required: false
+        type: string
+        default: sketches-reports
+
+jobs:
+  compute:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download sketches reports artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.reports-path }}
+          path: ${{ inputs.reports-path }}
+
+      - uses: arduino/report-size-deltas@v1
+        with:
+          sketches-reports-source: ${{ inputs.reports-path }}

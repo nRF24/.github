@@ -1,0 +1,93 @@
+name: Run Arduino CLI # on lib examples
+
+on:
+  workflow_call:
+    inputs:
+      sketch-paths:
+        required: true
+        type: string
+        description: Some name used for the folder of sketch reports and the artifact's title.
+      fqbn:
+        required: true
+        type: string
+        description: |
+          The name used to identify the board and Arduino core. This uses the template:
+          <vender name>:<core chip>:<board name>
+
+          Finding this info seems to be non-trivial.
+          - <vendor name> is the case sensitive name saved in the JSON file that
+            lists the vendor's supported Arduino cores.
+          - <core chip> is the family name of the chip that the core supports
+          - <board name> is the board's variant identifier used in boards.txt (under the
+            board's 'name' field).
+      libraries:
+        required: false
+        type: string
+        default: '- source-path: ./'
+        description: |
+          A yaml list of dependency libraries. For a specific version of src, use this template:
+          ```yml
+          - source-url: https://github.com/<owner>/<repo>.git
+            version: <branch_name>
+          ```
+          Otherwise, just the lib's name in the Arduino Lib Manager will suffic:
+          ```yml
+          - source-url: https://github.com/nRF24/RF24Network.git
+            version: master
+          - name: PubSubClient
+          - name: MQTT
+          - source-path: ./
+          ```
+      platforms:
+        required: true
+        type: string
+        description: |
+          A yaml list of Arduino cores. Commonly used platforms include:
+          ```yml
+          - name: arduino:avr
+          - name: arduino:megaavr
+          - name: arduino:sam
+          - name: arduino:samd
+          - name: arduino:mbed
+          - name: "ATTinyCore:avr"
+            source-url: "http://drazzy.com/package_drazzy.com_index.json"
+          - name: rp2040:rp2040
+            source-url: https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+          - name: adafruit:nrf52
+            source-url: https://adafruit.github.io/arduino-board-index/package_adafruit_index.json
+          - name: Seeeduino:nrf52
+            source-url: https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
+          ```
+      enable-deltas-report:
+        required: false
+        type: boolean
+      reports-path:
+        required: false
+        type: string
+        default: sketches-reports
+        description: Some name used for the folder of sketch reports and the artifact's title.
+
+jobs:
+  compile-sketches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Compile examples
+        uses: arduino/compile-sketches@main
+        with:
+          sketch-paths: ${{ inputs.sketch-paths }}
+          fqbn: ${{ inputs.fqbn }}
+          libraries: ${{ inputs.libraries }}
+          platforms: ${{ inputs.platforms }}
+          enable-deltas-report: ${{ inputs.enable-deltas-report }}
+          sketches-report-path: ${{ inputs.reports-path }}
+
+      # This step is needed to pass the size data to the report job 
+      - name: Upload sketches report to workflow artifact
+        if: ${{ inputs.enable-deltas-report }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ inputs.reports-path }}
+          path: ${{ inputs.reports-path }}

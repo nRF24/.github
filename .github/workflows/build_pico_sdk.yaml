@@ -1,0 +1,108 @@
+name: Run PlatformIO in CI
+
+on:
+  workflow_call:
+    inputs:
+      board-id:
+        required: true
+        type: string
+      rf24-ref:
+        required: false
+        type: string
+        default: master
+        description: git ref of the RF24 lib dependency
+      rf24network-ref:
+        required: false
+        type: string
+        default: master
+        description: git ref of the RF24Network lib dependency
+      rf24mesh-ref:
+        required: false
+        type: string
+        default: master
+        description: git ref of the RF24Mesh lib dependency
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+      BUILD_TYPE: Release
+
+    steps:
+      - name: get repo info
+        id: lib-info
+        run: |
+          lib_name=$(echo ${{ github.repository }} | sed 's;.\+/;;')
+          echo "name=$lib_name" >> $GITHUB_OUTPUT
+          lib_deps=''
+          if [[ $lib_name == 'RF24Mesh' ]]; then
+              lib_deps='RF24Network'
+          fi
+          echo "deps=$lib_deps" >> $GITHUB_OUTPUT
+
+      - name: checkout RF24 lib
+        uses: actions/checkout@v3
+        with:
+          repository: nRF24/RF24
+          path: RF24
+          ref: ${{ inputs.rf24-ref }}
+
+      - name: checkout RF24Network lib
+        if: contains(steps.lib-info.outputs.deps, 'RF24Network') || endsWith(github.repository, 'RF24Network')
+        uses: actions/checkout@v3
+        with:
+          repository: nRF24/RF24Network
+          path: RF24Network
+          ref: ${{ inputs.rf24network-ref }}
+
+      - name: checkout RF24Mesh lib
+        if: endsWith(github.repository, 'RF24Mesh')
+        uses: actions/checkout@v3
+        with:
+          path: RF24Mesh
+          ref: ${{ inputs.rf24mesh-ref }}
+
+      - name: Install toolchain
+        run: sudo apt update && sudo apt install gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
+
+      - name: Clone pico-sdk
+        uses: actions/checkout@v3
+        with:
+          repository: raspberrypi/pico-sdk
+          # master branch is latest stable release
+          path: pico-sdk
+          clean: false
+          submodules: true
+
+      - name: Checkout pico-sdk submodules
+        working-directory: ${{ github.workspace }}/pico-sdk
+        run: git submodule update --init
+
+      - name: Create Build Environment
+        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}
+        env:
+          PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
+        run: cmake -E make_directory ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+
+      - name: Configure CMake
+        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+        env:
+          PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
+        run: cmake ../examples_pico -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPICO_BOARD=${{ inputs.board-id }}
+
+      - name: Build
+        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+        # Execute the build. You can specify a specific target with "--target <NAME>"
+        run: cmake --build . --config $BUILD_TYPE
+
+      - name: Save artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: examples_pico_${{ inputs.board-id }}
+          path: |
+            ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build/*.uf2
+            ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build/*.elf
+          # ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build/*.hex
+          # ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build/*.bin
