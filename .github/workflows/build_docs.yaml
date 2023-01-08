@@ -15,9 +15,14 @@ jobs:
       lib-name: ${{ steps.fetch-repo.outputs.name }}
       mk-sphinx: ${{ steps.fetch-repo.outputs.has-sphinx-docs }}
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo w/o history
+        if: endsWith(github.repository, 'RF24Gateway') == false
+        uses: actions/checkout@v3
+      - name: Checkout repo w/ history
+        if: endsWith(github.repository, 'RF24Gateway')
+        uses: actions/checkout@v3
         with:
-          fetch-depth: ${{ !endsWith(github.repository, 'RF24Gateway') }}
+          fetch-depth: 0
       - name: get latest release version number
         id: fetch-repo
         run: |
