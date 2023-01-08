@@ -3,24 +3,36 @@ name: Build Docs
 on:
   workflow_call:
     inputs:
-      lib-version:
-        required: true
-        type: string
-      mk-sphinx:
-        required: false
-        type: boolean
       deploy-gh-pages:
         required: false
         type: boolean
 
 jobs:
+  get-info:
+    runs-on: ubuntu-latest
+    outputs:
+      lib-version: ${{ steps.fetch-repo.outputs.release }}
+      lib-name: ${{ steps.fetch-repo.outputs.name }}
+      mk-sphinx: ${{ steps.fetch-repo.outputs.has-sphinx-docs }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: ${{ !endsWith(github.repository, "RF24Gateway") }}
+      - name: get latest release version number
+        id: fetch-repo
+        run: |
+          if [[ -f library.properties ]]; then
+            echo "release=$(awk -F "=" '/version/ {print $2}' library.properties)" >> $GITHUB_OUTPUT
+          else
+            echo "release=$(git describe --tags | grep -o -E 'v[0-9]+\.[0-9]+\.[0-9]+')" >> $GITHUB_OUTPUT
+          fi
+          echo "name=$(echo ${{ github.repository }} | sed 's;.\+/;;')" >> $GITHUB_OUTPUT
+          echo "has-sphinx-docs=$(if [[ -f docs/sphinx ]]; then echo true; else echo false; fi)" >> $GITHUB_OUTPUT
+
   build-doxygen:
     runs-on: ubuntu-latest
+    needs: [get-info]
     steps:
-      - name: get repo info
-        id: lib-info
-        run: echo "name=$(echo ${{ github.repository }} | sed 's;.\+/;;')" >> $GITHUB_OUTPUT
-
       - name: install Doxygen static libclang deps
         run: sudo apt-get install libclang1-12 libclang-cpp12
 
@@ -34,13 +46,14 @@ jobs:
           tar xf doxygen.tar
           cd doxygen-$DOXYGEN_VERSION
           sudo make install
+
       - uses: actions/checkout@v3
 
       - name: overwrite doxygen tags
         working-directory: docs
         run: |
           touch doxygenAction
-          echo "PROJECT_NUMBER = ${{ inputs.lib-version }}" >> doxygenAction
+          echo "PROJECT_NUMBER = ${{ needs.get-info.outputs.lib-version }}" >> doxygenAction
           echo -e "\n@INCLUDE = doxygenAction" >> Doxyfile
 
       - run: doxygen
@@ -49,53 +62,49 @@ jobs:
       - name: Save doxygen docs as artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ steps.lib-info.outputs.name }}_doxygen_docs
+          name: ${{ needs.get-info.outputs.lib-name }}_doxygen_docs
           path: ${{ github.workspace }}/docs/html
 
       - name: Save doxygen XML as artifact
-        if: inputs.mk-sphinx
+        if: needs.get-info.outputs.mk-sphinx
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ steps.lib-info.outputs.name }}_doxygen_xml
+          name: ${{ needs.get-info.outputs.lib-name }}_doxygen_xml
           path: ${{ github.workspace }}/docs/sphinx/xml
 
   build-sphinx:
-    if: inputs.mk-sphinx
-    needs: [build-doxygen]
+    needs: [get-info, build-doxygen]
+    if: needs.get-info.outputs.mk-sphinx
     runs-on: ubuntu-latest
     steps:
-      - name: get repo info
-        id: lib-info
-        run: echo "name=$(echo ${{ github.repository }} | sed 's;.\+/;;')" >> $GITHUB_OUTPUT
-
       - uses: actions/setup-python@v4
         with:
           python-version: 3.x
-      
+
       - uses: actions/checkout@v3
-      
+
       - name: download XML artifact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ steps.lib-info.outputs.name }}_doxygen_xml
+          name: ${{ needs.get-info.outputs.lib-name }}_doxygen_xml
           path: ${{ github.workspace }}/docs/sphinx/xml
-      
+
       - name: Install sphinx deps
         run: python -m pip install -r docs/sphinx/requirements.txt
-      
+
       - name: build docs with Sphinx
         working-directory: docs
         run: sphinx-build sphinx _build
-      
+
       - name: Save sphinx docs as artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ steps.lib-info.outputs.name }}_sphinx_docs
+          name: ${{ needs.get-info.outputs.lib-name }}_sphinx_docs
           path: ${{ github.workspace }}/docs/_build
 
   deploy-docs:
     runs-on: ubuntu-latest
-    needs: [build-doxygen]
+    needs: [get-info, build-doxygen]
     if: inputs.deploy-gh-pages
     steps:
       - name: get repo info
@@ -105,7 +114,7 @@ jobs:
       - name: downlod artifact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ steps.lib-info.outputs.name }}_doxygen_docs
+          name: ${{ needs.get-info.outputs.lib-name }}_doxygen_docs
           path: docs
 
       - name: upload to github pages
