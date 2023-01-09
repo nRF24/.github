@@ -240,7 +240,7 @@ jobs:
         if: inputs.examples-path != ''
         # This script assumes that any examples using ncurses reside in a 'ncurses' subdirectory
         # as is the case w/ RF24Mesh, RF24Gateway, and any new ncurses examples going forward.
-        runs: |
+        run: |
           if [[ -d ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/${{ inputs.examples-path }}/ncurses ]]; then
             if [[ ${{ inputs.compiler }} == 'default' ]]; then
               sudo apt-get install libncurses5-dev
