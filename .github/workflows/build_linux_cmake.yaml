@@ -245,16 +245,19 @@ jobs:
             if [[ ${{ inputs.compiler }} == 'default' ]]; then
               sudo apt-get install libncurses5-dev
             else
-              curl -L https://invisible-island.net/datafiles/release/ncurses.tar.gz > ncurses.tar.gz
-              gunzip ncurses.tar.gz
-              tar xf ncurses.tar
-              cd ncurses-*
-              ./configure --prefix=/usr/${{ inputs.usr-dir }} --build=${{ inputs.usr-dir }}
-              make
-              sudo make install
+              echo "skipping the ncurses examples for cross-compiled builds"
+
+              # avoid cross-compiling linker problems in CI; this works locally but takes a while to build
+              # curl -L https://invisible-island.net/datafiles/release/ncurses.tar.gz > ncurses.tar.gz
+              # gunzip ncurses.tar.gz
+              # tar xf ncurses.tar
+              # cd ncurses-*
+              # ./configure --prefix=/usr/${{ inputs.usr-dir }} --build=${{ inputs.usr-dir }}
+              # make
+              # sudo make install
             fi
           else
-            echo "ncurses is not needed for these examples" >> $GITHUB_OUTPUT
+            echo "ncurses is not needed for these examples"
           fi
 
       - name: configure examples
