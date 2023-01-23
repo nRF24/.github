@@ -65,7 +65,7 @@ jobs:
           if [[ $lib_name == 'RF24Mesh' ]]; then
             rf24_deps=RF24Network
           elif [[ $lib_name == 'RF24Ethernet' ]]; then
-            rf24_deps=RF24Network;RF24Mesh
+            rf24_deps='RF24Network;RF24Mesh'
           fi
           echo "rf24-deps=$rf24_deps" >> $GITHUB_OUTPUT
 
