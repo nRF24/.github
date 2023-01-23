@@ -60,7 +60,7 @@ jobs:
       - name: get lib info
         id: lib-info
         run: |
-          lib_name=$(echo 'nrf24/RF24' | sed -e 's;.\+/;;')
+          lib_name=$(echo ${{ github.repository }} | sed -e 's;.\+/;;')
           rf24_deps=''
           if [[ $lib_name == 'RF24Mesh' ]]; then
             rf24_deps=RF24Network
