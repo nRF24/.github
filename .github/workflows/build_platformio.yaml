@@ -79,19 +79,19 @@ jobs:
 
       - name: Install RF24 library dependency
         if: endsWith(github.repository, 'RF24') == false
-        run: pio pkg install -l 'https://github.com/nRF24/RF24.git#${{ inputs.rf24-ref }}'
+        run: pio pkg install -g -l 'https://github.com/nRF24/RF24.git#${{ inputs.rf24-ref }}'
 
       - name: Install RF24Network library dependency
         if: contains(steps.lib-info.outputs.rf24-deps, 'RF24Network') && !endsWith(github.repository, 'RF24Network')
-        run: pio pkg install -l 'https://github.com/nRF24/RF24Network.git#${{ inputs.rf24network-ref }}'
+        run: pio pkg install -g -l 'https://github.com/nRF24/RF24Network.git#${{ inputs.rf24network-ref }}'
 
       - name: Install RF24Mesh library dependency
         if: contains(steps.lib-info.outputs.rf24-deps, 'RF24Mesh') && !endsWith(github.repository, 'RF24Mesh')
-        run: pio pkg install -l 'https://github.com/nRF24/RF24Mesh.git#${{ inputs.rf24mesh-ref }}'
+        run: pio pkg install -g -l 'https://github.com/nRF24/RF24Mesh.git#${{ inputs.rf24mesh-ref }}'
 
       - name: Install extra dependencies
         if: inputs.lib-deps != ''
-        run: pio pkg install -l ${{ inputs.lib-deps }}
+        run: pio pkg install -g ${{ inputs.lib-deps }}
 
       - name: Run PlatformIO
         run: pio ci --lib="." --board=${{ inputs.board-id }}
