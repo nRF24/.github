@@ -45,7 +45,12 @@ for index in "${!REPOS[@]}"
 do
     read -p "Do you want to install the ${REPOS[index]} library, [y/N]? " answer
     case ${answer^^} in
-        Y ) DO_INSTALL[index]=1;;
+        Y ) DO_INSTALL[index]=1
+            read -p "Which version/branch of ${REPOS[index]} to install (default is ${BRANCHES[index]})? " version
+            if [[ ${#version} -gt 0 ]]; then
+                BRANCHES[index]=$version
+            fi
+            ;;
     esac
 done
 
@@ -100,6 +105,9 @@ export RF24_DRIVER=$RF24DRIVER
 
 # ensure we have a fresh build directory
 create_build_env() {
+    if [[ -f "Makefile.inc" ]]; then
+        rm Makefile.inc
+    fi
     if [[ -d "./build" ]]
     then
         echo "Purging build environment."$'\n'
@@ -120,9 +128,14 @@ install_repo() {
     fi
     echo ""
     cd $ROOT_PATH/${REPOS[$1]}
+    git fetch --all
     git checkout ${BRANCHES[$1]}
-    create_build_env
-    cmake ..
+    if [[ -f "CmakeLists.txt" ]]; then
+        create_build_env
+        cmake ..
+    elif [[ -f "configure" ]]; then
+        ./configure --driver=$RF24_DRIVER
+    fi
     if ! make
     then
         echo "Building lib ${REPOS[$1]} failed. Quiting now."
@@ -133,24 +146,37 @@ install_repo() {
         echo "Installing lib ${REPOS[$1]} failed. Quiting now."
         exit 1
     fi
-    cd ../../..
+    CWD=$(pwd)
+    if [[ "$CWD" == "*/build" ]]; then
+        cd ../../..
+    else
+        ldconfig
+        cd ../..
+    fi
     read -p $'\n'"Do you want to build the ${REPOS[$1]} examples [Y/n]? " answer
     case ${answer^^} in
         N ) ;;
         * )
             cd $ROOT_PATH/${REPOS[$1]}/${EXAMPLE_PATH[$1]}
-            create_build_env
-            cmake ..
+            if [[ -f "CmakeLists.txt" ]]; then
+                create_build_env
+                cmake ..
+            fi
             if ! make
             then
                 echo "Building examples for lib ${REPOS[$1]} failed. Quiting now."
                 exit 1
             fi
-            cd ../../../..
             echo ""
             echo "Complete! To run the example:"
-            echo "cd ${args[0]}/$ROOT_PATH/${REPOS[$1]}/${EXAMPLE_PATH[$1]}/build"
-            echo "sudo ./${SUGGESTED_EXAMPLE[$1]}";;
+            CWD=$(pwd)
+            echo "cd $CWD"
+            echo "sudo ./${SUGGESTED_EXAMPLE[$1]}"
+            if [[ "$CWD" == "*/build" ]]; then
+                cd ../../../..
+            else
+                cd ../../..
+            fi;;
     esac
 }
 
