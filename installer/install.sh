@@ -130,7 +130,7 @@ install_repo() {
     cd $ROOT_PATH/${REPOS[$1]}
     git fetch --all
     git checkout ${BRANCHES[$1]}
-    if [[ -f "CmakeLists.txt" ]]; then
+    if [[ -f "CMakeLists.txt" ]]; then
         create_build_env
         cmake ..
     elif [[ -f "configure" ]]; then
@@ -148,17 +148,17 @@ install_repo() {
     fi
     CWD=$(pwd)
     if [[ "$CWD" == "*/build" ]]; then
-        cd ../../..
+        cd ../..
     else
         ldconfig
-        cd ../..
+        cd ..
     fi
     read -p $'\n'"Do you want to build the ${REPOS[$1]} examples [Y/n]? " answer
     case ${answer^^} in
         N ) ;;
         * )
             cd $ROOT_PATH/${REPOS[$1]}/${EXAMPLE_PATH[$1]}
-            if [[ -f "CmakeLists.txt" ]]; then
+            if [[ -f "CMakeLists.txt" ]]; then
                 create_build_env
                 cmake ..
             fi
