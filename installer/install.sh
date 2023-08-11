@@ -6,10 +6,8 @@ then
     cd ${args[0]}
 else
     cd ~
-    args[0]="~"
 fi
-
-ROOT_PATH="rf24libs"
+ROOT_PATH="$(pwd)/rf24libs"
 REPOS=("RF24" "RF24Network" "RF24Mesh" "RF24Gateway")
 DO_INSTALL=("0" "0" "0" "0")
 EXAMPLE_PATH=("examples_linux" "examples_RPi" "examples_RPi" "examples")
@@ -124,7 +122,7 @@ install_repo() {
     then
         git clone https://github.com/nRF24/${REPOS[$1]} $ROOT_PATH/${REPOS[$1]}
     else
-        echo "Using already cloned repo ${args[0]}/$ROOT_PATH/${REPOS[$1]}"
+        echo "Using already cloned repo $ROOT_PATH/${REPOS[$1]}"
     fi
     echo ""
     cd $ROOT_PATH/${REPOS[$1]}
@@ -147,11 +145,8 @@ install_repo() {
         exit 1
     fi
     CWD=$(pwd)
-    if [[ "$CWD" == "*/build" ]]; then
-        cd ../..
-    else
+    if [[ "$CWD" != "*/build" ]]; then
         ldconfig
-        cd ..
     fi
     read -p $'\n'"Do you want to build the ${REPOS[$1]} examples [Y/n]? " answer
     case ${answer^^} in
@@ -172,11 +167,6 @@ install_repo() {
             CWD=$(pwd)
             echo "cd $CWD"
             echo "sudo ./${SUGGESTED_EXAMPLE[$1]}"
-            if [[ "$CWD" == "*/build" ]]; then
-                cd ../../../..
-            else
-                cd ../../..
-            fi;;
     esac
 }
 
@@ -196,28 +186,22 @@ case ${INSTALL_PYRF24^^} in
         then
             git clone https://github.com/nRF24/pyRF24 $ROOT_PATH/pyRF24
         else
-            echo "Using already cloned repo ${args[0]}/$ROOT_PATH/pyRF24"
+            echo "Using already cloned repo $ROOT_PATH/pyRF24"
         fi
         cd $ROOT_PATH/pyRF24
         echo $'\nInitializing frozen submodules\n'
         git submodule update --init
         echo $'\nInstalling build prequisites.\n'
-        python -m pip install -r requirements.txt
-        # endure there are no previous wheels in the dist/ folder
-        if [[ -d "$ROOT_PATH/pyRF24/dist" ]]
-        then
-            rm -r dist/
-        fi
-        echo $'\nInstalling pyrf24 package.\n'
-        python setup.py bdist_wheel
-        python -m pip install dist/pyrf24*.whl
-        cd ../../
+        python3 -m pip install -r requirements.txt
+        echo $'\nInstalling pyrf24 package (from source).\n'
+        # building from src respects the selected $RF24_DRIVER ('pip install pyrf24' strictly uses SPIDEV)
+        python3 -m pip install .
         ;;
 esac
 echo $'\n\n'"*** Installer Complete ***"
 echo "See http://tmrh20.github.io for documentation"
 echo "See http://tmrh20.blogspot.com for info "
-echo $'\n'"Listing repositories in ${args[0]}/$ROOT_PATH"
+echo $'\n'"Listing repositories in $ROOT_PATH"
 ls ${ROOT_PATH}
 
 # clean up env var
