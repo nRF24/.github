@@ -179,6 +179,7 @@ do
 done
 
 INSTALL_PYRF24="N"
+echo $'\n'
 read -p "Would you like to install the unified python wrapper package (pyrf24) [y/N]?" INSTALL_PYRF24
 case ${INSTALL_PYRF24^^} in
     Y )
