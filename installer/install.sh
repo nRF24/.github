@@ -146,7 +146,7 @@ install_repo() {
     fi
     CWD=$(pwd)
     if [[ "$CWD" != "*/build" ]]; then
-        ldconfig
+        sudo ldconfig
     fi
     read -p $'\n'"Do you want to build the ${REPOS[$1]} examples [Y/n]? " answer
     case ${answer^^} in
