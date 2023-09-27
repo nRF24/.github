@@ -17,10 +17,10 @@ jobs:
     steps:
       - name: Checkout repo w/o history
         if: endsWith(github.repository, 'RF24Gateway') == false
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Checkout repo w/ history
         if: endsWith(github.repository, 'RF24Gateway')
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: get latest release version number
@@ -52,7 +52,7 @@ jobs:
           cd doxygen-$DOXYGEN_VERSION
           sudo make install
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: overwrite doxygen tags
         working-directory: docs
@@ -86,7 +86,7 @@ jobs:
         with:
           python-version: 3.x
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: download XML artifact
         uses: actions/download-artifact@v3
