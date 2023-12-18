@@ -98,7 +98,7 @@ jobs:
         run: cmake --build . --config $BUILD_TYPE
 
       - name: Save artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: examples_pico_${{ inputs.board-id }}
           path: |
