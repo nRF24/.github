@@ -65,14 +65,14 @@ jobs:
         working-directory: docs
 
       - name: Save doxygen docs as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ needs.get-info.outputs.lib-name }}_doxygen_docs
           path: ${{ github.workspace }}/docs/html
 
       - name: Save doxygen XML as artifact
         if: needs.get-info.outputs.mk-sphinx == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ needs.get-info.outputs.lib-name }}_doxygen_xml
           path: ${{ github.workspace }}/docs/sphinx/xml
@@ -102,7 +102,7 @@ jobs:
         run: sphinx-build sphinx _build
 
       - name: Save sphinx docs as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ needs.get-info.outputs.lib-name }}_sphinx_docs
           path: ${{ github.workspace }}/docs/_build
