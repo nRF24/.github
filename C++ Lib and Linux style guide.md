@@ -804,3 +804,45 @@ Only use spaces (not tabs).
 ## `UseCRLF: false`
 
 This project is primarily for Linux platforms, so we prefer to have LF line endings. We don't use Windows-style CRLF line endings.
+
+## `EmptyLineAfterAccessModifier: Leave`
+
+Allows empty lines after a data structure's access modifiers.
+
+```cpp
+class MyClass {
+    
+public:
+
+    MyClass();
+
+private:
+    _some_private_function();
+};
+```
+
+## `IndentAccessModifiers: false`
+
+Do not indent data structures' access modifiers. They should be the same indentation as the structure's definition.
+
+## `ReferenceAlignment: Right`
+
+A reference operator (`&`) should be aligned to the right (immediately preceding the object name).
+
+```cpp
+void myFunc(bool &inputVar) { /* ... */ }
+```
+
+## `SpacesInLineCommentPrefix: { Maximum: -1, Minimum: 0 }`
+
+Inline comments (beginning with `//`) do not need any mandatory spaces before the comment content. Additionally, there is no maximum space mandated.
+
+## `ShortNamespaceLines: 0`
+
+The number of lines that qualifies a short namespace definition is 0. This is so a closing brace (`}`) for a namespace is always postfixed with a comment that indicates the end of a namespace definition.
+
+```cpp
+namespace a {
+    int foo;
+} // namespace a
+```

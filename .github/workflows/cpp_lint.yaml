@@ -20,21 +20,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-      # Ubuntu 22.04 runners no longer ship with clang-format-12
       - name: Install clang-format
-        run: sudo apt-get install clang-format-12
+        run: sudo apt-get install clang-format-17
       - name: Install linter python package
-        run: python3 -m pip install cpp-linter
+        run: python3 -m pip install 'cpp-linter>=1.7.1'
       - name: run linter as a python package
         id: linter
-        run: |
-          cpp-linter \
-          --version=12 \
-          --style=file \
-          --tidy-checks='-*' \
-          --files-changed-only='False' \
-          --extensions=${{ inputs.extensions }} \
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          cpp-linter
+          --version=12
+          --style=file
+          --tidy-checks='-*'
+          --files-changed-only='False'
+          --extensions=${{ inputs.extensions }}
           --ignore='${{ inputs.ignore }}'
+          --format-review=true
+          --file-annotations=false
       - name: Linter checks failed?
         if: steps.linter.outputs.checks-failed > 0
         run: exit 1
