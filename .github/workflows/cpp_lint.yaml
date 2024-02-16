@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: 3.x
       - name: Install clang-format
-        run: sudo apt-get install clang-format-16
+        run: sudo apt-get install clang-format-14
       - name: Install linter python package
         run: python3 -m pip install 'cpp-linter>=1.7.1'
       - name: run linter as a python package
@@ -30,7 +30,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >-
           cpp-linter
-          --version=16
+          --version=14
           --style=file
           --tidy-checks='-*'
           --lines-changed-only=true
