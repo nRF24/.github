@@ -825,14 +825,6 @@ private:
 
 Do not indent data structures' access modifiers. They should be the same indentation as the structure's definition.
 
-## `ReferenceAlignment: Right`
-
-A reference operator (`&`) should be aligned to the right (immediately preceding the object name).
-
-```cpp
-void myFunc(bool &inputVar) { /* ... */ }
-```
-
 ## `SpacesInLineCommentPrefix: { Maximum: -1, Minimum: 0 }`
 
 Inline comments (beginning with `//`) do not need any mandatory spaces before the comment content. Additionally, there is no maximum space mandated.
