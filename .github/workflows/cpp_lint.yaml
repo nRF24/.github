@@ -33,7 +33,7 @@ jobs:
           --version=16
           --style=file
           --tidy-checks='-*'
-          --files-changed-only='False'
+          --lines-changed-only=true
           --extensions=${{ inputs.extensions }}
           --ignore='${{ inputs.ignore }}'
           --format-review=true
