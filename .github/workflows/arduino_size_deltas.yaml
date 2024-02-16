@@ -15,8 +15,12 @@ jobs:
       - name: Download sketches reports artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ inputs.reports-path }}
-          path: ${{ inputs.reports-path }}
+          pattern: arduino-deltas-*
+          path: .ci-artifacts
+      
+      - run: |-
+          mkdir ${{inputs.reports-path }}
+          mv .ci-artifacts/**.json ${{ inputs.reports-path }}
 
       - uses: arduino/report-size-deltas@v1
         with:
