@@ -18,6 +18,7 @@ jobs:
           pattern: arduino-deltas-*
           path: ${{ inputs.reports-path }}
 
-      - uses: arduino/report-size-deltas@v1
+      - uses: 2bndy5/report-size-deltas@update-comment
         with:
           sketches-reports-source: ${{ inputs.reports-path }}
+          update-comment: true
