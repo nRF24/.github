@@ -77,19 +77,19 @@ then
 fi
 
 echo "*** Which hardware driver library do you wish to use? ***"
-echo "1. BCM2835 Driver (aka RPi)"
-echo "2. SPIDEV (most compatible, Default)"
-echo "3. WiringPi (support deprecated)"
-echo "4. MRAA (Intel Devices)"
-echo "5. PiGPIO"
+echo "1. SPIDEV (most compatible, Default)"
+echo "2. WiringPi"
+echo "3. MRAA (Intel Devices)"
+echo "4. PiGPIO"
+echo "5. BCM2835 Driver (aka RPi)"
 echo "6. LittleWire"
 read answer
 case ${answer^^} in
-    1) RF24DRIVER+="RPi";;
-    2) RF24DRIVER+="SPIDEV";;
-    3) RF24DRIVER+="wiringPi";;
-    4) RF24DRIVER+="MRAA";;
-    5) RF24DRIVER+="pigpio";;
+    1) RF24DRIVER+="SPIDEV";;
+    2) RF24DRIVER+="wiringPi";;
+    3) RF24DRIVER+="MRAA";;
+    4) RF24DRIVER+="pigpio";;
+    5) RF24DRIVER+="RPi";;
     6) RF24DRIVER+="LittleWire";;
     *) RF24DRIVER+="SPIDEV";;
 esac
