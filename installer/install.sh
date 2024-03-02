@@ -81,7 +81,7 @@ echo "1. SPIDEV (most compatible, Default)"
 echo "2. WiringPi"
 echo "3. MRAA (Intel Devices)"
 echo "4. PiGPIO"
-echo "5. BCM2835 Driver (aka RPi)"
+echo "5. BCM2835 Driver (for RPi only)"
 echo "6. LittleWire"
 read answer
 case ${answer^^} in
