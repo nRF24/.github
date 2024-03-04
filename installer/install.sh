@@ -10,6 +10,7 @@ fi
 ROOT_PATH="$(pwd)/rf24libs"
 REPOS=("RF24" "RF24Network" "RF24Mesh" "RF24Gateway")
 DO_INSTALL=("0" "0" "0" "0")
+CHOOSE_VERSION="N"
 EXAMPLE_PATH=("examples_linux" "examples_RPi" "examples_RPi" "examples")
 SUGGESTED_EXAMPLE=("gettingstarted" "helloworld_tx" "RF24Mesh_Example_Master" "RF24Gateway_ncurses")
 
@@ -39,16 +40,22 @@ then
     sudo apt-get install cmake
 fi
 
+read -p "Choose versions to install (Default: Install latest code from master) [y/N]? " CHOOSE_VERSION
+
 for index in "${!REPOS[@]}"
 do
     read -p "Do you want to install the ${REPOS[index]} library, [y/N]? " answer
     case ${answer^^} in
         Y ) DO_INSTALL[index]=1
-            read -p "Which version/branch of ${REPOS[index]} to install (default is ${BRANCHES[index]})? " version
-            if [[ ${#version} -gt 0 ]]; then
-                BRANCHES[index]=$version
+            if [ "${CHOOSE_VERSION^^}" = "Y" ]
+            then
+                read -p "Which version/branch of ${REPOS[index]} to install (default is ${BRANCHES[index]})? " version
+                if [[ ${#version} -gt 0 ]]; then
+                    BRANCHES[index]=$version
+                fi
             fi
             ;;
+        * ) ;;
     esac
 done
 
