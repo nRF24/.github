@@ -6,6 +6,10 @@ on:
       deploy-gh-pages:
         required: false
         type: boolean
+      doxygen-version:
+        required: false
+        type: string
+        default: '1.9.6'
 
 jobs:
   get-info:
@@ -43,7 +47,7 @@ jobs:
 
       - name: install doxygen from SF binary archives
         env:
-          DOXYGEN_VERSION: '1.9.6'
+          DOXYGEN_VERSION: ${{ inputs.doxygen-version }}
         run: |
           mkdir .doxygen && cd .doxygen
           curl -L https://sourceforge.net/projects/doxygen/files/rel-$DOXYGEN_VERSION/doxygen-$DOXYGEN_VERSION.linux.bin.tar.gz > doxygen.tar.gz
