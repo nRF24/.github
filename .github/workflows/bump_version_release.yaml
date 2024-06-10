@@ -70,6 +70,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >-
           gh release create
-          ${{ steps.inc-ver.outputs.new-version }}
+          v${{ steps.inc-ver.outputs.new-version }}
           --generate-notes
           --repo nRF24/${{ inputs.repo }}
