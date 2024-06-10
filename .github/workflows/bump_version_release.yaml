@@ -12,19 +12,14 @@ on:
           - "RF24Mesh"
           - "RF24Gateway"
           - "RF24Ethernet"
-      major:
-        type: boolean
-        default: false
+      bump-component:
+        type: choice
+        default: 'patch'
         required: true
-      minor:
-        type: boolean
-        default: false
-        required: true
-      patch:
-        type: boolean
-        default: true
-        required: true
-
+        options:
+          - 'major'
+          - 'minor'
+          - 'patch'
 jobs:
   release-version-bump:
     runs-on: ubuntu-latest
@@ -50,9 +45,7 @@ jobs:
         id: inc-ver
         run: >-
           python "../org-repo/.github/workflows/increment_version.py"
-          --major=${{ inputs.major }}
-          --minor=${{ inputs.minor }}
-          --patch=${{ inputs.patch }}
+          --bump=${{ inputs.bump-component }}
           --update-metadata
 
       - name: push metadata changes

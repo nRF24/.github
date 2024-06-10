@@ -12,6 +12,7 @@ from typing import cast, Dict, Tuple, List
 import sys
 
 VERSION_TUPLE = Tuple[int, int, int]
+COMPONENTS = ["major", "minor", "patch"]
 
 
 def get_version() -> VERSION_TUPLE:
@@ -20,7 +21,6 @@ def get_version() -> VERSION_TUPLE:
         ["gh", "release", "list", "--limit=1", "--json=tagName"],
         capture_output=True,
         check=True,
-        # shell=True,
     )
     ver_json = cast(
         List[Dict[str, str]], json.loads(result.stdout.decode(encoding="utf-8"))
@@ -33,17 +33,11 @@ def get_version() -> VERSION_TUPLE:
     return int(ver_tuple[0]), int(ver_tuple[1]), int(ver_tuple[2])
 
 
-def increment_version(
-    version: VERSION_TUPLE, major: bool = False, minor: bool = False, patch: bool = True
-) -> VERSION_TUPLE:
-    """Increment given version based on specified ``major``, ``minor``, and ``patch`` flags."""
+def increment_version(version: VERSION_TUPLE, bump: str = "patch") -> VERSION_TUPLE:
+    """Increment given version based on specified ``bump`` component."""
     new_ver = list(version)  # make tuple mutable
-    if major:
-        new_ver[0] += 1
-    if minor:
-        new_ver[1] += 1
-    if patch:
-        new_ver[2] += 1
+    component = COMPONENTS.index(bump)
+    new_ver[component] += 1
     return tuple(new_ver)
 
 
@@ -71,31 +65,18 @@ def update_metadata_files(version: str) -> bool:
 
 
 class Args(argparse.Namespace):
-    major: bool = False
-    minor: bool = False
-    patch: bool = False
+    bump: str = "patch"
     update_metadata: bool = False
 
 
 def main(argv: List[str] = sys.argv) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--major",
-        default=False,
-        type=lambda x: x.lower() == "true",
-        help="Set to true to bump major version number",
-    )
-    parser.add_argument(
-        "--minor",
-        default=False,
-        type=lambda x: x.lower() == "true",
-        help="Set to true to bump minor version number",
-    )
-    parser.add_argument(
-        "--patch",
-        default=False,
-        type=lambda x: x.lower() == "true",
-        help="Set to true to bump patch version number",
+        "-b",
+        "--bump",
+        default="patch",
+        choices=COMPONENTS,
+        help="The version component to increment",
     )
     parser.add_argument(
         "-U",
@@ -105,9 +86,7 @@ def main(argv: List[str] = sys.argv) -> int:
     )
     args = parser.parse_args(namespace=Args())
 
-    version = increment_version(
-        version=get_version(), major=args.major, minor=args.minor, patch=args.patch
-    )
+    version = increment_version(version=get_version(), bump=args.bump)
     ver_str = ".".join([str(x) for x in version])
 
     made_changes = False
