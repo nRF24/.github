@@ -1,0 +1,75 @@
+name: Bump version and release
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo:
+        type: choice
+        required: true
+        options:
+          - "RF24"
+          - "RF24Network"
+          - "RF24Mesh"
+          - "RF24Gateway"
+          - "RF24Ethernet"
+      major:
+        type: boolean
+        default: false
+        required: true
+      minor:
+        type: boolean
+        default: false
+        required: true
+      patch:
+        type: boolean
+        default: true
+        required: true
+
+jobs:
+  release-version-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout ${{ inputs.repo }}
+        uses: actions/checkout@v4
+        with:
+          repository: nRF24/${{ inputs.repo }}
+          fetch-depth: 0
+          path: ${{ inputs.repo }}
+
+      - name: checkout org repo
+        uses: actions/checkout@v4
+        with:
+          path: org-repo
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: increment version
+        working-directory: ${{ inputs.repo }}
+        id: inc-ver
+        run: >-
+          python "../org-repo/.github/workflows/increment_version.py"
+          --major=${{ inputs.major }}
+          --minor=${{ inputs.minor }}
+          --patch=${{ inputs.patch }}
+          --update-metadata
+
+      - name: push metadata changes
+        working-directory: ${{ inputs.repo }}
+        if: steps.inc-ver.outputs.made-changes == 'true'
+        run: |-
+          git config --global user.name "${GITHUB_ACTOR}"
+          git config --global user.email ""${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
+          git add --all
+          git commit -m "bump version to v${{ steps.inc-ver.outputs.new-version }}"
+          git push
+
+      - name: publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          gh release create
+          ${{ steps.inc-ver.outputs.new-version }}
+          --generate-notes
+          --repo nRF24/${{ inputs.repo }}
