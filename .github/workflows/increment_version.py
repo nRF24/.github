@@ -44,22 +44,29 @@ def increment_version(version: VERSION_TUPLE, bump: str = "patch") -> VERSION_TU
 def update_metadata_files(version: str) -> bool:
     """update the library metadata files with the new specified ``version``."""
     made_changes = False
+    meta: List[Tuple[Path, str, str]] = [
+        (
+            Path("library.json"),
+            r'"version":\s+"(\d+\.\d+\.\d+)",',
+            f'"version": "{version}",',
+        ),
+        (
+            Path("library.properties"),
+            r"version=(\d+\.\d+\.\d+)",
+            f"version={version}",
+        ),
+    ]
 
-    pio_meta_file = Path("library.json")
-    if pio_meta_file.exists():
-        pio_ver_pattern = re.compile(r'"version":\s+"\d+\.\d+\.\d+",')
-        data = pio_meta_file.read_text(encoding="utf-8")
-        data = pio_ver_pattern.sub(f'"version": "{version}",', data)
-        pio_meta_file.write_text(data, encoding="utf-8", newline="\n")
-        made_changes = True
-
-    arduino_meta_file = Path("library.properties")
-    if arduino_meta_file.exists():
-        arduino_ver_pattern = re.compile(r"version=\d+\.\d+\.\d+")
-        data = arduino_meta_file.read_text(encoding="utf-8")
-        data = arduino_ver_pattern.sub(f"version={version}", data)
-        arduino_meta_file.write_text(data, encoding="utf-8", newline="\n")
-        made_changes = True
+    for meta_file, pattern, update in meta:
+        if meta_file.exists():
+            ver_pattern = re.compile(pattern)
+            data = meta_file.read_text(encoding="utf-8")
+            ver_match = ver_pattern.search(data)
+            assert ver_match is not None, "could not find version in " + str(meta_file)
+            if ver_match.group(1) != version:
+                data = ver_pattern.sub(update, data)
+                meta_file.write_text(data, encoding="utf-8", newline="\n")
+                made_changes = True
 
     return made_changes
 
@@ -93,8 +100,9 @@ def main(argv: List[str] = sys.argv) -> int:
     made_changes = False
     if args.update_metadata:
         made_changes = update_metadata_files(ver_str)
+        print("Metadata file(s) updated:", made_changes)
 
-    if "GITHUB_OUTPUT" in environ:  # create an output variable for use in CI workflow
+    if "GITHUB_OUTPUT" in environ:  # create an output variables for use in CI workflow
         with open(environ["GITHUB_OUTPUT"], mode="a") as gh_out:
             gh_out.write(f"new-version={ver_str}\n")
             gh_out.write(f"made-changes={str(made_changes).lower()}\n")
