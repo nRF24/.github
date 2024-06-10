@@ -88,6 +88,7 @@ def main(argv: List[str] = sys.argv) -> int:
 
     version = increment_version(version=get_version(), bump=args.bump)
     ver_str = ".".join([str(x) for x in version])
+    print("New version:", ver_str)
 
     made_changes = False
     if args.update_metadata:
@@ -97,8 +98,6 @@ def main(argv: List[str] = sys.argv) -> int:
         with open(environ["GITHUB_OUTPUT"], mode="a") as gh_out:
             gh_out.write(f"new-version={ver_str}\n")
             gh_out.write(f"made-changes={str(made_changes).lower()}\n")
-    else:  # use stdout for non-CI env (locally run)
-        print("New version:", ver_str)
 
     return 0
 
