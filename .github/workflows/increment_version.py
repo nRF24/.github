@@ -1,5 +1,6 @@
 """A simple script to get current latest version from repo in working directory and
-increment it accordingly."""
+increment it accordingly. This can also be used to alter the version in metadata
+files."""
 
 import argparse
 import json
@@ -82,25 +83,25 @@ def main(argv: List[str] = sys.argv) -> int:
         "--major",
         default=False,
         type=lambda x: x.lower() == "true",
-        help="bump major version number",
+        help="Set to true to bump major version number",
     )
     parser.add_argument(
         "--minor",
         default=False,
         type=lambda x: x.lower() == "true",
-        help="bump minor version number",
+        help="Set to true to bump minor version number",
     )
     parser.add_argument(
         "--patch",
         default=False,
         type=lambda x: x.lower() == "true",
-        help="bump patch version number",
+        help="Set to true to bump patch version number",
     )
     parser.add_argument(
         "-U",
         "--update-metadata",
         action="store_true",
-        help="update library metadata files with new version number",
+        help="Update library metadata files with new version number",
     )
     args = parser.parse_args(namespace=Args())
 
