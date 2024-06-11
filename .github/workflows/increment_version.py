@@ -3,12 +3,11 @@ increment it accordingly. This can also be used to alter the version in metadata
 files."""
 
 import argparse
-import json
 from os import environ
 from pathlib import Path
 import re
 import subprocess
-from typing import cast, Dict, Tuple, List
+from typing import cast, Tuple, List, Sequence
 import sys
 
 VERSION_TUPLE = Tuple[int, int, int]
@@ -17,20 +16,54 @@ COMPONENTS = ["major", "minor", "patch"]
 
 def get_version() -> VERSION_TUPLE:
     """get current latest tag and parse into a 3-tuple"""
+    # get list of all tags
     result = subprocess.run(
-        ["gh", "release", "list", "--limit=1", "--json=tagName"],
+        ["git", "log", "--no-walk", "--tags", '--pretty="%D"'],
         capture_output=True,
         check=True,
     )
-    ver_json = cast(
-        List[Dict[str, str]], json.loads(result.stdout.decode(encoding="utf-8"))
-    )[0]
-    assert "tagName" in ver_json, f"got malformed output from gh-cli:\n{ver_json}"
-    ver_tag = ver_json["tagName"].lstrip("v")
-    print("Current version:", ver_tag)
-    ver_tuple = ver_tag.split(".")
-    assert len(ver_tuple) == 3, f"failed to parse version from tag {ver_tag}"
-    return int(ver_tuple[0]), int(ver_tuple[1]), int(ver_tuple[2])
+    tags: Sequence[VERSION_TUPLE] = set()  # using a set to avoid duplicates
+    tag_pattern = re.compile(r"tag: v?(\d+\.\d+\.[A-Za-z0-9-_]+)")
+    for line in result.stdout.decode(encoding="utf-8").splitlines():
+        ver_tags = cast(List[str], tag_pattern.findall(line))
+        for ver_tag in ver_tags:
+            try:
+                ver_tuple = tuple([int(x) for x in ver_tag.split(".")])
+            except ValueError:
+                print(ver_tag, "is not a stable version spec; skipping")
+                continue
+            if len(ver_tuple) < 3:
+                print(ver_tag, "is an incomplete version spec; skipping")
+                continue
+            tags.add(cast(VERSION_TUPLE, ver_tuple))
+    tags = sorted(tags)  # sort by version & converts to a list
+    tags.reverse()  # to iterate from newest to oldest versions
+    print("found version tags:")
+    for tag in tags:
+        print("    v" + ".".join([str(t) for t in tag]))
+
+    # get current branch
+    result = subprocess.run(["git", "branch"], capture_output=True, check=True)
+    branch = "master"
+    for line in result.stdout.decode(encoding="utf-8").splitlines():
+        if line.startswith("*"):
+            branch = line.lstrip("*").strip()
+            break
+    else:
+        raise RuntimeError("could not determine the currently checked out branch name")
+    if branch.endswith("1.x"):
+        print("filtering tags for branch", branch)
+        for tag in tags:
+            if tag[0] == 1:
+                ver_tag = tag
+                break
+        else:
+            raise RuntimeError(f"Found no v1.x tags for branch {branch}")
+    else:
+        print("treating branch", branch, "as latest stable branch")
+        ver_tag = tags[0]
+    print("Current version:", ".".join([str(x) for x in ver_tag]))
+    return ver_tag
 
 
 def increment_version(version: VERSION_TUPLE, bump: str = "patch") -> VERSION_TUPLE:
