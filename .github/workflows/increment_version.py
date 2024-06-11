@@ -78,6 +78,9 @@ def increment_version(version: VERSION_TUPLE, bump: str = "patch") -> VERSION_TU
     new_ver = list(version)  # make tuple mutable
     component = COMPONENTS.index(bump)
     new_ver[component] += 1
+    # zero out minor and patch components if needed
+    for i in range(component + 1, len(COMPONENTS)):
+        new_ver[i] = 0
     return tuple(new_ver)
 
 
