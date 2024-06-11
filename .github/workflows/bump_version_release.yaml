@@ -12,6 +12,7 @@ on:
           - "RF24Mesh"
           - "RF24Gateway"
           - "RF24Ethernet"
+          - "RF24Audio"
       branch:
         type: string
         required: true
