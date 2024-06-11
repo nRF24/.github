@@ -3,11 +3,12 @@ increment it accordingly. This can also be used to alter the version in metadata
 files."""
 
 import argparse
+import json
 from os import environ
 from pathlib import Path
 import re
 import subprocess
-from typing import cast, Tuple, List, Sequence
+from typing import cast, Tuple, List, Sequence, Dict
 import sys
 
 VERSION_TUPLE = Tuple[int, int, int]
@@ -23,18 +24,18 @@ def get_version() -> VERSION_TUPLE:
         check=True,
     )
     tags: Sequence[VERSION_TUPLE] = set()  # using a set to avoid duplicates
-    tag_pattern = re.compile(r"tag: v?(\d+\.\d+\.[A-Za-z0-9-_]+)")
+    tag_pattern = re.compile(r"tag:\s+(?:RF24)?v?(\d+\.\d+\.?[A-Za-z0-9-_]*)")
     for line in result.stdout.decode(encoding="utf-8").splitlines():
         ver_tags = cast(List[str], tag_pattern.findall(line))
         for ver_tag in ver_tags:
             try:
-                ver_tuple = tuple([int(x) for x in ver_tag.split(".")])
+                ver_tuple = tuple([int(x) for x in ver_tag.split(".", maxsplit=3)])
             except ValueError:
                 print(ver_tag, "is not a stable version spec; skipping")
                 continue
             if len(ver_tuple) < 3:
-                print(ver_tag, "is an incomplete version spec; skipping")
-                continue
+                print(ver_tag, "is an incomplete version spec; appending zero(s)")
+                ver_tuple += (0,) * (3 - len(ver_tuple))
             tags.add(cast(VERSION_TUPLE, ver_tuple))
     tags = sorted(tags)  # sort by version & converts to a list
     tags.reverse()  # to iterate from newest to oldest versions
@@ -50,7 +51,13 @@ def get_version() -> VERSION_TUPLE:
             branch = line.lstrip("*").strip()
             break
     else:
-        raise RuntimeError("could not determine the currently checked out branch name")
+        print(
+            "Could not determine the currently checked out branch name;",
+            "assuming default branch",
+            repr(branch),
+        )
+
+    # filter tags and find the appropriate latest tag according to current branch
     if branch.endswith("1.x"):
         print("filtering tags for branch", branch)
         for tag in tags:
@@ -60,7 +67,7 @@ def get_version() -> VERSION_TUPLE:
         else:
             raise RuntimeError(f"Found no v1.x tags for branch {branch}")
     else:
-        print("treating branch", branch, "as latest stable branch")
+        print("treating branch", repr(branch), "as latest stable branch")
         ver_tag = tags[0]
     print("Current version:", ".".join([str(x) for x in ver_tag]))
     return ver_tag
@@ -77,29 +84,35 @@ def increment_version(version: VERSION_TUPLE, bump: str = "patch") -> VERSION_TU
 def update_metadata_files(version: str) -> bool:
     """update the library metadata files with the new specified ``version``."""
     made_changes = False
-    meta: List[Tuple[Path, str, str]] = [
-        (
-            Path("library.json"),
-            r'"version":\s+"(\d+\.\d+\.\d+)",',
-            f'"version": "{version}",',
-        ),
-        (
-            Path("library.properties"),
-            r"version=(\d+\.\d+\.\d+)",
-            f"version={version}",
-        ),
-    ]
+    # NOTE: Path.write_text(..., newline="\n") requires python v3.10+
 
-    for meta_file, pattern, update in meta:
-        if meta_file.exists():
-            ver_pattern = re.compile(pattern)
-            data = meta_file.read_text(encoding="utf-8")
-            ver_match = ver_pattern.search(data)
-            assert ver_match is not None, "could not find version in " + str(meta_file)
-            if ver_match.group(1) != version:
-                data = ver_pattern.sub(update, data)
-                meta_file.write_text(data, encoding="utf-8", newline="\n")
-                made_changes = True
+    pio_meta_file = Path("library.json")
+    if pio_meta_file.exists():
+        # treat PIO metadata as a dict to prevent us from alter a dep's `version`
+        data = cast(
+            Dict[str, str], json.loads(pio_meta_file.read_text(encoding="utf-8"))
+        )
+        assert "version" in data
+        if data["version"] != version:
+            data["version"] = version
+            pio_meta_file.write_text(
+                json.dumps(data, indent=4), encoding="utf-8", newline="\n"
+            )
+            made_changes = True
+
+    arduino_meta_file = Path("library.properties")
+    if arduino_meta_file.exists():
+        # simple search and replace
+        ver_pattern = re.compile(r"version=(\d+\.\d+\.?\d*)")
+        data = arduino_meta_file.read_text(encoding="utf-8")
+        ver_match = ver_pattern.search(data)
+        assert ver_match is not None, "could not find version in " + str(
+            arduino_meta_file
+        )
+        if ver_match.group(1) != version:
+            data = ver_pattern.sub(f"version={version}", data)
+            arduino_meta_file.write_text(data, encoding="utf-8", newline="\n")
+            made_changes = True
 
     return made_changes
 
