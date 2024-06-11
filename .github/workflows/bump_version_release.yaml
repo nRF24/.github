@@ -36,6 +36,7 @@ jobs:
           ref: ${{ inputs.branch }}
           fetch-depth: 0
           path: ${{ inputs.repo }}
+          token: ${{ secrets.BUMP_N_RELEASE }}
 
       - name: checkout org repo
         uses: actions/checkout@v4
@@ -67,7 +68,7 @@ jobs:
 
       - name: publish release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.BUMP_N_RELEASE }}
         run: >-
           gh release create
           v${{ steps.inc-ver.outputs.new-version }}
