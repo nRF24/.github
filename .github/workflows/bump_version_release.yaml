@@ -25,6 +25,9 @@ on:
           - 'major'
           - 'minor'
           - 'patch'
+
+run-name: Deploying ${{ inputs.repo }}
+
 jobs:
   release-version-bump:
     runs-on: ubuntu-latest
