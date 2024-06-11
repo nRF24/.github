@@ -77,3 +77,4 @@ jobs:
           v${{ steps.inc-ver.outputs.new-version }}
           --generate-notes
           --repo nRF24/${{ inputs.repo }}
+          --target ${{ inputs.branch }}
