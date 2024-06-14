@@ -125,7 +125,7 @@ class Args(argparse.Namespace):
     update_metadata: bool = False
 
 
-def main(argv: List[str] = sys.argv) -> int:
+def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "-b",
