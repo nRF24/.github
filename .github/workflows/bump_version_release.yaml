@@ -13,6 +13,8 @@ on:
           - "RF24Gateway"
           - "RF24Ethernet"
           - "RF24Audio"
+          - "CircuitPython_nRF24L01"
+          - "pyRF24"
       branch:
         type: string
         required: true
