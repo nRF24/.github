@@ -82,7 +82,7 @@ body:
       label: Describe your problem
       description: Please use as much detail as possible.
       placeholder: Something seems broken because ...
-    validation:
+    validations:
       required: true
 
   - type: markdown

@@ -42,7 +42,7 @@ body:
       # `label` is a required field here. I'm guessing that it cannot be an empty string.
       label: What would you like to know?
       placeholder: You can use markdown syntax here
-    validation:
+    validations:
       required: true
 
   - type: markdown
