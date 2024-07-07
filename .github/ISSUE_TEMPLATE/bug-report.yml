@@ -74,6 +74,13 @@ body:
         ```text
         uname -srm && lsb_release -a
         ```
+      placeholder: |-
+        Linux 6.6.28+rpt-rpi-v7 armv7l
+        No LSB modules are available.
+        Distributor ID:	Raspbian
+        Description:	Raspbian GNU/Linux 12 (bookworm)
+        Release:	12
+        Codename:	bookworm
       render: text
 
   - type: textarea
@@ -81,7 +88,7 @@ body:
     attributes:
       label: Describe your problem
       description: Please use as much detail as possible.
-      placeholder: Something seems broken because ...
+      placeholder: You can use markdown syntax here
     validations:
       required: true
 
@@ -90,7 +97,8 @@ body:
     attributes:
       value: |-
         GitHub supports their own flavor of MarkDown syntax.
-        Learn more in [GitHub's documentation](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
+        Learn more about writing Markdown syntax in
+        [GitHub's documentation](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
 
   - type: textarea
     id: rx-code
@@ -110,6 +118,6 @@ body:
       description: >-
         Use this area to show your relevant source code for TX behavior.
       value: |-
-        #include <RF24.h>
-        // ...
+        // The code for RX is same for TX.
+        // See above code for RX
       render: cpp

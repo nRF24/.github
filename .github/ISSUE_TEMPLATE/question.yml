@@ -27,7 +27,7 @@ body:
 
         <details><summary>The pyRF24 package has numerous advantages over the older/individual python wrapper(s)</summary>
 
-        - [x] [drop-in compatible](https://nrf24.github.io/pyRF24/#migrating-to-pyrf24)
+        - [x] [drop-in compatible](https://nrf24.github.io/pyRF24/#migrating-to-pyrf24) API
         - [x] available via [`pip install pyrf24`](https://pypi.org/project/pyrf24/)
         - [x] no need to build from source, and does not require the C++ libraries installed
         - [x] includes wrappers for RF24, RF24Network, RF24Mesh libraries and a fake BLE implementation
@@ -50,4 +50,5 @@ body:
     attributes:
       value: |-
         GitHub supports their own flavor of MarkDown syntax.
-        Learn more in [GitHub's documentation](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
+        Learn more about writing Markdown syntax in
+        [GitHub's documentation](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
