@@ -22,20 +22,21 @@ body:
         > - [PlatformIO forums](https://community.platformio.org/)
 
         We also host exhaustive [library documentation][docs].
-        Please check the [API docs][api-docs] and/or [platform-specific pages][platform-pages] to see if your problem is described or addressed there.
+        Please check the [API documentation][api-docs] or [platform support pages][platform-pages] to see if your question is addressed there.
 
-        Python users should migrate to using our [pyRF24](https://github.com/nRF24/pyRF24) python package.
-
-        <details><summary>The pyRF24 package has numerous advantages over the older/individual python wrapper(s)</summary>
-
-        - [x] [drop-in compatible](https://nrf24.github.io/pyRF24/#migrating-to-pyrf24)
-        - [x] available via [`pip install pyrf24`](https://pypi.org/project/pyrf24/)
-        - [x] no need to build from source and does not require the C++ libraries installed
-        - [x] includes wrappers for RF24, RF24Network, RF24Mesh libraries and a fake BLE implementation
-        - [x] includes typing stubs for type checking tools like mypy
-        - [x] has [dedicated documentation](https://nrf24.github.io/pyRF24) and supports Python's builtin `help()` function
-
-        </details>
+        > [!important]
+        > Python users should migrate to using our [pyRF24](https://github.com/nRF24/pyRF24) python package.
+        >
+        > <details><summary>The pyRF24 package has numerous advantages over the older/individual python wrapper(s)</summary>
+        >
+        > - [x] [drop-in compatible](https://nrf24.github.io/pyRF24/#migrating-to-pyrf24) API
+        > - [x] available via [`pip install pyrf24`](https://pypi.org/project/pyrf24/)
+        > - [x] no need to build from source and does not require the C++ libraries installed
+        > - [x] includes wrappers for RF24, RF24Network, RF24Mesh libraries and a fake BLE implementation
+        > - [x] includes typing stubs for type checking tools like mypy
+        > - [x] has [dedicated documentation](https://nrf24.github.io/pyRF24) and supports Python's builtin `help()` function
+        >
+        > </details>
 
   - type: input
     id: module
