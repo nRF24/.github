@@ -7,7 +7,12 @@ body:
   - type: markdown
     attributes:
       value: |-
-        Please read [about common issues](https://github.com/nRF24/RF24/blob/master/COMMON_ISSUES.md) first.
+        [docs]: https://nRF24.github.io/RF24
+        [api-docs]: https://nrf24.github.io/RF24/classRF24.html
+        [common-issues]: https://github.com/nRF24/RF24/blob/master/COMMON_ISSUES.md
+        [platform-pages]: https://nrf24.github.io/RF24/pages.html
+
+        Please read [about common issues][common-issues] first.
         It addresses the most common problems that people have (whether they know it or not).
 
         > [!caution]
@@ -16,10 +21,8 @@ body:
         > - [Arduino Forums](https://forum.arduino.cc/)
         > - [PlatformIO forums](https://community.platformio.org/)
 
-        We also host exhaustive [library documentation](https://nRF24.github.io/RF24).
-        Please check the [API docs](https://nrf24.github.io/RF24/classRF24.html)
-        and/or [platform-specific pages](https://nrf24.github.io/RF24/pages.html)
-        to see if your problem is described or addressed there.
+        We also host exhaustive [library documentation][docs].
+        Please check the [API docs][api-docs] and/or [platform-specific pages][platform-pages] to see if your problem is described or addressed there.
 
         Python users should migrate to using our [pyRF24](https://github.com/nRF24/pyRF24) python package.
 
@@ -96,9 +99,10 @@ body:
     id: how-to-md
     attributes:
       value: |-
+        [gfm-doc]: https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax
+
         GitHub supports their own flavor of MarkDown syntax.
-        Learn more about writing Markdown syntax in
-        [GitHub's documentation](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
+        Learn more about writing Markdown syntax in [GitHub's documentation][gfm-doc].
 
   - type: textarea
     id: rx-code
