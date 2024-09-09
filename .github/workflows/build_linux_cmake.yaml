@@ -273,13 +273,6 @@ jobs:
         # doesn't build the RF24Mesh_Ncurses_Master example because we haven't cross-compiled it in this workflow
         run: cmake --build .
 
-      # cross-compiling a python C extension is better done with pypa/cibuildwheel action
-      - name: Set up Python 3.7
-        if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.7
-
       - name: provide python wrapper prerequisites
         if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
         # python3-rpi.gpio is only required for physical hardware (namely the IRQ example)
@@ -287,7 +280,22 @@ jobs:
 
       - name: create alias symlink to libboost_python3*.so
         if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
-        run: sudo ln -s $(ls /usr/lib/$(ls /usr/lib/gcc | tail -1)/libboost_python3*.so | tail -1) /usr/lib/$(ls /usr/lib/gcc | tail -1)/libboost_python3.so
+        id: symlink-boost-python
+        run: |
+          arch=$(ls /usr/lib/gcc | tail -1)
+          arch_libs=/usr/lib/$arch
+          boost_python_so=$(ls $arch_libs/libboost_python3*.so | tail -1)
+          py_ver=$(echo $boost_python_so | sed -E 's/.*libboost_python([0-9])([0-9]+)\.so/\1.\2/')
+          echo "python version used by boost.pytrhon is $py_ver"
+          echo "python-version=$py_ver" >> $GITHUB_OUTPUT
+          sudo ln -s $boost_python_so $arch_libs/libboost_python3.so
+
+      # cross-compiling a python C extension is better done with pypa/cibuildwheel action
+      - name: Set up Python 3.7
+        if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ steps.symlink-boost-python.outputs.python-version }}
 
       - name: build python wrapper
         if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
