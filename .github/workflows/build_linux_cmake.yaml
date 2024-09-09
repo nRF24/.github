@@ -291,7 +291,7 @@ jobs:
           sudo ln -s $boost_python_so $arch_libs/libboost_python3.so
 
       # cross-compiling a python C extension is better done with pypa/cibuildwheel action
-      - name: Set up Python 3.7
+      - name: Set up Python version used by boost.python
         if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
         uses: actions/setup-python@v5
         with:
