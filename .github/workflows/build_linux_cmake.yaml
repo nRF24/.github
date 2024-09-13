@@ -297,12 +297,7 @@ jobs:
         with:
           python-version: ${{ steps.symlink-boost-python.outputs.python-version }}
 
-      - name: build python wrapper
-        if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
-        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/${{ inputs.py-wrapper-path }}
-        run: python3 setup.py build
-
       - name: install python wrapper
         if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
         working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/${{ inputs.py-wrapper-path }}
-        run: sudo python3 setup.py install
+        run: python3 -m pip install .
