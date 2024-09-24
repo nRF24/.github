@@ -10,6 +10,7 @@ import re
 import subprocess
 from typing import cast, Tuple, List, Sequence, Dict
 import sys
+from difflib import unified_diff
 
 VERSION_TUPLE = Tuple[int, int, int]
 COMPONENTS = ["major", "minor", "patch"]
@@ -87,8 +88,14 @@ def increment_version(version: VERSION_TUPLE, bump: str = "patch") -> VERSION_TU
 
 
 def get_changelog(tag: str, first_commit: str, full: bool = False):
-    """Gets the changelog for this release."""
-    output = "CHANGELOG.md"
+    """Gets the changelog for this release.
+    If ``full`` is true, then this returns a flag to describe if
+    anything was changed in the CHANGELOG.md"""
+    old = ""
+    changelog = Path("CHANGELOG.md")
+    if full and changelog.exists():
+        old = changelog.read_text(encoding="utf-8")
+    output = changelog
     args = ["git", "cliff", "--config", str(GIT_CLIFF_CONFIG), "--tag", tag]
     if not full:
         args.append("--unreleased")
@@ -98,6 +105,11 @@ def get_changelog(tag: str, first_commit: str, full: bool = False):
         env={"FIRST_COMMIT": first_commit, "GITHUB_REPO": "nrf24/" + Path.cwd().name},
         check=True,
     )
+    if full:
+        new = changelog.read_text(encoding="utf-8")
+        changes = list(unified_diff(old, new))
+        return len(changes) != 0
+    return False
 
 
 def get_first_commit() -> str:
@@ -171,10 +183,9 @@ def main() -> int:
     # generate release notes and save them to a file
     get_changelog(ver_str, first_commit, full=False)
     # generate complete changelog
-    get_changelog(ver_str, first_commit, full=True)
+    made_changes = get_changelog(ver_str, first_commit, full=True)
     print("New version:", ver_str)
 
-    made_changes = False
     if args.update_metadata:
         made_changes = update_metadata_files(ver_str)
         print("Metadata file(s) updated:", made_changes)
