@@ -13,6 +13,8 @@ import sys
 
 VERSION_TUPLE = Tuple[int, int, int]
 COMPONENTS = ["major", "minor", "patch"]
+GIT_CLIFF_CONFIG = Path(__file__).parent / "cliff.toml"
+RELEASE_NOTES = GIT_CLIFF_CONFIG.with_name("ReleaseNotes.md")
 
 
 def get_version() -> VERSION_TUPLE:
@@ -84,6 +86,27 @@ def increment_version(version: VERSION_TUPLE, bump: str = "patch") -> VERSION_TU
     return tuple(new_ver)
 
 
+def get_changelog(tag: str, first_commit: str, full: bool = False):
+    """Gets the changelog for this release."""
+    output = "CHANGELOG.md"
+    args = ["git", "cliff", "--config", str(GIT_CLIFF_CONFIG), "--tag", tag]
+    if not full:
+        args.append("--unreleased")
+        output = str(RELEASE_NOTES)
+    subprocess.run(
+        args + ["--output", output],
+        env={"FIRST_COMMIT": first_commit, "GITHUB_REPO": "nrf24/" + Path.cwd().name},
+        check=True,
+    )
+
+
+def get_first_commit() -> str:
+    result = subprocess.run(
+        ["git", "rev-list", "--max-parents=0", "HEAD"], check=True, capture_output=True
+    )
+    return result.stdout.decode("utf-8")
+
+
 def update_metadata_files(version: str) -> bool:
     """update the library metadata files with the new specified ``version``."""
     made_changes = False
@@ -144,6 +167,11 @@ def main() -> int:
 
     version = increment_version(version=get_version(), bump=args.bump)
     ver_str = ".".join([str(x) for x in version])
+    first_commit = get_first_commit()
+    # generate release notes and save them to a file
+    get_changelog(ver_str, first_commit, full=False)
+    # generate complete changelog
+    get_changelog(ver_str, first_commit, full=True)
     print("New version:", ver_str)
 
     made_changes = False
@@ -153,6 +181,7 @@ def main() -> int:
 
     if "GITHUB_OUTPUT" in environ:  # create an output variables for use in CI workflow
         with open(environ["GITHUB_OUTPUT"], mode="a") as gh_out:
+            gh_out.write(f"release-notes={RELEASE_NOTES}\n")
             gh_out.write(f"new-version={ver_str}\n")
             gh_out.write(f"made-changes={str(made_changes).lower()}\n")
 

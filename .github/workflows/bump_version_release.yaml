@@ -53,6 +53,9 @@ jobs:
           # here we need v3.10+
           python-version: 3.x
 
+      - name: Install git-cliff
+        run: pip install git-cliff
+
       - name: increment version
         working-directory: ${{ inputs.repo }}
         id: inc-ver
@@ -77,6 +80,6 @@ jobs:
         run: >-
           gh release create
           v${{ steps.inc-ver.outputs.new-version }}
-          --generate-notes
+          --notes-file ${{ steps.inc-ver.outputs.release-notes }}
           --repo nRF24/${{ inputs.repo }}
           --target ${{ inputs.branch }}
