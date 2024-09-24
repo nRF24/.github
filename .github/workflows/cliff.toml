@@ -17,7 +17,7 @@ body = """
 {%- macro remote_url() -%}
   https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}
 {%- endmacro -%}
-{%- set init_commit = get_env("FIRST_COMMIT", null) -%}
+{%- set init_commit = get_env(name="FIRST_COMMIT", default="") -%}
 {%- set this_version = "Unreleased" -%}
 
 {% if version -%}

@@ -96,14 +96,12 @@ def get_changelog(tag: str, first_commit: str, full: bool = False):
     if full and changelog.exists():
         old = changelog.read_text(encoding="utf-8")
     output = changelog
-    args = ["git", "cliff", "--config", str(GIT_CLIFF_CONFIG), "--tag", tag]
+    args = ["git-cliff", "--config", str(GIT_CLIFF_CONFIG), "--tag", tag]
     if not full:
         args.append("--unreleased")
         output = str(RELEASE_NOTES)
     subprocess.run(
-        args + ["--output", output],
-        env={"FIRST_COMMIT": first_commit, "GITHUB_REPO": "nrf24/" + Path.cwd().name},
-        check=True,
+        args + ["--output", output], env={"FIRST_COMMIT": first_commit}, check=True
     )
     if full:
         new = changelog.read_text(encoding="utf-8")
@@ -116,7 +114,7 @@ def get_first_commit() -> str:
     result = subprocess.run(
         ["git", "rev-list", "--max-parents=0", "HEAD"], check=True, capture_output=True
     )
-    return result.stdout.decode("utf-8")
+    return result.stdout.decode("utf-8").strip()
 
 
 def update_metadata_files(version: str) -> bool:
