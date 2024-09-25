@@ -18,7 +18,7 @@ GIT_CLIFF_CONFIG = Path(__file__).parent / "cliff.toml"
 RELEASE_NOTES = GIT_CLIFF_CONFIG.with_name("ReleaseNotes.md")
 
 
-def get_version() -> VERSION_TUPLE:
+def get_version() -> Tuple[VERSION_TUPLE, str]:
     """get current latest tag and parse into a 3-tuple"""
     # get list of all tags
     result = subprocess.run(
@@ -73,7 +73,7 @@ def get_version() -> VERSION_TUPLE:
         print("treating branch", repr(branch), "as latest stable branch")
         ver_tag = tags[0]
     print("Current version:", ".".join([str(x) for x in ver_tag]))
-    return ver_tag
+    return ver_tag, branch
 
 
 def increment_version(version: VERSION_TUPLE, bump: str = "patch") -> VERSION_TUPLE:
@@ -87,7 +87,9 @@ def increment_version(version: VERSION_TUPLE, bump: str = "patch") -> VERSION_TU
     return tuple(new_ver)
 
 
-def get_changelog(tag: str, first_commit: str, full: bool = False):
+def get_changelog(
+    tag: str, first_commit: str, full: bool = False, branch: str = "main"
+):
     """Gets the changelog for this release.
     If ``full`` is true, then this returns a flag to describe if
     anything was changed in the CHANGELOG.md"""
@@ -100,6 +102,8 @@ def get_changelog(tag: str, first_commit: str, full: bool = False):
     if not full:
         args.append("--unreleased")
         output = str(RELEASE_NOTES)
+    if branch == "v1.x":
+        args.extend(["--ignore-tags", "[v|V]?2\\..*"])
     subprocess.run(
         args + ["--output", output], env={"FIRST_COMMIT": first_commit}, check=True
     )
@@ -175,13 +179,14 @@ def main() -> int:
     )
     args = parser.parse_args(namespace=Args())
 
-    version = increment_version(version=get_version(), bump=args.bump)
+    version, branch = get_version()
+    version = increment_version(version=version, bump=args.bump)
     ver_str = ".".join([str(x) for x in version])
     first_commit = get_first_commit()
     # generate release notes and save them to a file
-    get_changelog(ver_str, first_commit, full=False)
+    get_changelog(ver_str, first_commit, full=False, branch=branch)
     # generate complete changelog
-    made_changes = get_changelog(ver_str, first_commit, full=True)
+    made_changes = get_changelog(ver_str, first_commit, full=True, branch=branch)
     print("New version:", ver_str)
 
     if args.update_metadata:
