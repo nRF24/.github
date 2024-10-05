@@ -10,12 +10,15 @@ import re
 import subprocess
 from typing import cast, Tuple, List, Sequence, Dict
 import sys
+from difflib import unified_diff
 
 VERSION_TUPLE = Tuple[int, int, int]
 COMPONENTS = ["major", "minor", "patch"]
+GIT_CLIFF_CONFIG = Path(__file__).parent / "cliff.toml"
+RELEASE_NOTES = GIT_CLIFF_CONFIG.with_name("ReleaseNotes.md")
 
 
-def get_version() -> VERSION_TUPLE:
+def get_version() -> Tuple[VERSION_TUPLE, str]:
     """get current latest tag and parse into a 3-tuple"""
     # get list of all tags
     result = subprocess.run(
@@ -70,7 +73,7 @@ def get_version() -> VERSION_TUPLE:
         print("treating branch", repr(branch), "as latest stable branch")
         ver_tag = tags[0]
     print("Current version:", ".".join([str(x) for x in ver_tag]))
-    return ver_tag
+    return ver_tag, branch
 
 
 def increment_version(version: VERSION_TUPLE, bump: str = "patch") -> VERSION_TUPLE:
@@ -82,6 +85,40 @@ def increment_version(version: VERSION_TUPLE, bump: str = "patch") -> VERSION_TU
     for i in range(component + 1, len(COMPONENTS)):
         new_ver[i] = 0
     return tuple(new_ver)
+
+
+def get_changelog(
+    tag: str, first_commit: str, full: bool = False, branch: str = "main"
+):
+    """Gets the changelog for this release.
+    If ``full`` is true, then this returns a flag to describe if
+    anything was changed in the CHANGELOG.md"""
+    old = ""
+    changelog = Path("CHANGELOG.md")
+    if full and changelog.exists():
+        old = changelog.read_text(encoding="utf-8")
+    output = changelog
+    args = ["git-cliff", "--config", str(GIT_CLIFF_CONFIG), "--tag", tag]
+    if not full:
+        args.append("--unreleased")
+        output = str(RELEASE_NOTES)
+    if branch == "v1.x":
+        args.extend(["--ignore-tags", "[v|V]?2\\..*"])
+    subprocess.run(
+        args + ["--output", output], env={"FIRST_COMMIT": first_commit}, check=True
+    )
+    if full:
+        new = changelog.read_text(encoding="utf-8")
+        changes = list(unified_diff(old, new))
+        return len(changes) != 0
+    return False
+
+
+def get_first_commit() -> str:
+    result = subprocess.run(
+        ["git", "rev-list", "--max-parents=0", "HEAD"], check=True, capture_output=True
+    )
+    return result.stdout.decode("utf-8").strip()
 
 
 def update_metadata_files(version: str) -> bool:
@@ -142,17 +179,23 @@ def main() -> int:
     )
     args = parser.parse_args(namespace=Args())
 
-    version = increment_version(version=get_version(), bump=args.bump)
+    version, branch = get_version()
+    version = increment_version(version=version, bump=args.bump)
     ver_str = ".".join([str(x) for x in version])
+    first_commit = get_first_commit()
+    # generate release notes and save them to a file
+    get_changelog(ver_str, first_commit, full=False, branch=branch)
+    # generate complete changelog
+    made_changes = get_changelog(ver_str, first_commit, full=True, branch=branch)
     print("New version:", ver_str)
 
-    made_changes = False
     if args.update_metadata:
         made_changes = update_metadata_files(ver_str)
         print("Metadata file(s) updated:", made_changes)
 
     if "GITHUB_OUTPUT" in environ:  # create an output variables for use in CI workflow
         with open(environ["GITHUB_OUTPUT"], mode="a") as gh_out:
+            gh_out.write(f"release-notes={RELEASE_NOTES}\n")
             gh_out.write(f"new-version={ver_str}\n")
             gh_out.write(f"made-changes={str(made_changes).lower()}\n")
 
