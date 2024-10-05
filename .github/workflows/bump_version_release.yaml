@@ -53,8 +53,13 @@ jobs:
           # here we need v3.10+
           python-version: 3.x
 
+      - run: rustup update --no-self-update
+
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@main
+
       - name: Install git-cliff
-        run: pip install git-cliff
+        run: cargo binstall -y git-cliff --install-path org-repo
 
       - name: increment version
         working-directory: ${{ inputs.repo }}
@@ -83,3 +88,4 @@ jobs:
           --notes-file ${{ steps.inc-ver.outputs.release-notes }}
           --repo nRF24/${{ inputs.repo }}
           --target ${{ inputs.branch }}
+          --title v${{ steps.inc-ver.outputs.new-version }}

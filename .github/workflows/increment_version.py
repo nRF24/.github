@@ -14,7 +14,7 @@ from difflib import unified_diff
 
 VERSION_TUPLE = Tuple[int, int, int]
 COMPONENTS = ["major", "minor", "patch"]
-GIT_CLIFF_CONFIG = Path(__file__).parent / "cliff.toml"
+GIT_CLIFF_CONFIG = (Path(__file__).parent / "cliff.toml").resolve()
 RELEASE_NOTES = GIT_CLIFF_CONFIG.with_name("ReleaseNotes.md")
 
 
@@ -44,7 +44,7 @@ def get_version() -> Tuple[VERSION_TUPLE, str]:
     tags.reverse()  # to iterate from newest to oldest versions
     print("found version tags:")
     for tag in tags:
-        print("    v" + ".".join([str(t) for t in tag]))
+        print("    v" + ".".join([str(t) for t in tag]), flush=True)
 
     # get current branch
     result = subprocess.run(["git", "branch"], capture_output=True, check=True)
@@ -70,9 +70,9 @@ def get_version() -> Tuple[VERSION_TUPLE, str]:
         else:
             raise RuntimeError(f"Found no v1.x tags for branch {branch}")
     else:
-        print("treating branch", repr(branch), "as latest stable branch")
+        print("treating branch", repr(branch), "as latest stable branch", flush=True)
         ver_tag = tags[0]
-    print("Current version:", ".".join([str(x) for x in ver_tag]))
+    print("Current version:", ".".join([str(x) for x in ver_tag]), flush=True)
     return ver_tag, branch
 
 
@@ -95,18 +95,29 @@ def get_changelog(
     anything was changed in the CHANGELOG.md"""
     old = ""
     changelog = Path("CHANGELOG.md")
-    if full and changelog.exists():
+    if not changelog.exists():
+        changelog.write_bytes(b"")
+    if full:
         old = changelog.read_text(encoding="utf-8")
     output = changelog
-    args = ["git-cliff", "--config", str(GIT_CLIFF_CONFIG), "--tag", tag]
+    exe_name = "git-cliff"
+    if environ.get("CI", "false") == "true":
+        exe_name = (
+            (GIT_CLIFF_CONFIG.parent.parent.parent / exe_name).resolve().as_posix()
+        )
+    args = [exe_name, "--github-repo", f"nRF24/{Path.cwd().name}"]
     if not full:
         args.append("--unreleased")
         output = str(RELEASE_NOTES)
     if branch == "v1.x":
         args.extend(["--ignore-tags", "[v|V]?2\\..*"])
-    subprocess.run(
-        args + ["--output", output], env={"FIRST_COMMIT": first_commit}, check=True
-    )
+    env = {
+        "FIRST_COMMIT": first_commit,
+        "GIT_CLIFF_CONFIG": str(GIT_CLIFF_CONFIG),
+        "GIT_CLIFF_OUTPUT": str(output),
+        "GIT_CLIFF_TAG": tag,
+    }
+    subprocess.run(args, env=env, check=True)
     if full:
         new = changelog.read_text(encoding="utf-8")
         changes = list(unified_diff(old, new))
@@ -187,10 +198,11 @@ def main() -> int:
     get_changelog(ver_str, first_commit, full=False, branch=branch)
     # generate complete changelog
     made_changes = get_changelog(ver_str, first_commit, full=True, branch=branch)
+    print("Updated CHANGELOG.md:", made_changes)
     print("New version:", ver_str)
 
     if args.update_metadata:
-        made_changes = update_metadata_files(ver_str)
+        made_changes = made_changes or update_metadata_files(ver_str)
         print("Metadata file(s) updated:", made_changes)
 
     if "GITHUB_OUTPUT" in environ:  # create an output variables for use in CI workflow
