@@ -202,7 +202,7 @@ def main() -> int:
     print("New version:", ver_str)
 
     if args.update_metadata:
-        made_changes = made_changes or update_metadata_files(ver_str)
+        made_changes = update_metadata_files(ver_str) or made_changes
         print("Metadata file(s) updated:", made_changes)
 
     if "GITHUB_OUTPUT" in environ:  # create an output variables for use in CI workflow

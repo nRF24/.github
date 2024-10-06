@@ -35,7 +35,7 @@ body = """
     ### {{ group | upper_first }}
     {% for commit in commits | unique(attribute="message") %}
         - {{ commit.message | split(pat="\n") | first | upper_first | trim }}\
-            {% if commit.remote.username %} by @{{ commit.remote.username }}{%- endif -%}
+            {% if commit.remote.username %} by \\@{{ commit.remote.username }}{%- endif -%}
             {% if commit.remote.pr_number %} in \
             [#{{ commit.remote.pr_number }}]({{ self::remote_url() }}/pull/{{ commit.remote.pr_number }})
             {%- else %} in \
@@ -64,7 +64,7 @@ Full commit diff: [`{% if previous.version -%}
 {%- endif -%}
 
 {% for contributor in github.contributors | filter(attribute="is_first_time", value=true) %}
-  * @{{ contributor.username }} made their first contribution
+  * \\@{{ contributor.username }} made their first contribution
     {%- if contributor.pr_number %} in \
       [#{{ contributor.pr_number }}]({{ self::remote_url() }}/pull/{{ contributor.pr_number }}) \
     {%- endif %}
@@ -88,6 +88,9 @@ filter_unconventional = false
 commit_preprocessors = [
     # remove issue numbers from commits
     { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "" },
+    # escape doxygen command prefixes
+    { pattern = '\s(@\w)', replace = " \\$1" },
+    { pattern = '\s(\\\w)', replace = " \\$1" },
 ]
 # regex for parsing and grouping commits
 commit_parsers = [
