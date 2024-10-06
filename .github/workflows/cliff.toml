@@ -89,8 +89,9 @@ commit_preprocessors = [
     # remove issue numbers from commits
     { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "" },
     # escape doxygen command prefixes
-    { pattern = '\s(@\w)', replace = " \\$1" },
-    { pattern = '\s(\\\w)', replace = " \\$1" },
+    { pattern = '(\s?)(@\w)', replace = "$1\\$2" },
+    { pattern = '(\s?)(\\\w)', replace = "$1\\$2" },
+    { pattern = '(\s?)(#\w)', replace = "$1\\$2" },
 ]
 # regex for parsing and grouping commits
 commit_parsers = [

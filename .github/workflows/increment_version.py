@@ -115,7 +115,7 @@ def get_changelog(
         "FIRST_COMMIT": first_commit,
         "GIT_CLIFF_CONFIG": str(GIT_CLIFF_CONFIG),
         "GIT_CLIFF_OUTPUT": str(output),
-        "GIT_CLIFF_TAG": tag,
+        "GIT_CLIFF_TAG": f"v{tag}",
     }
     subprocess.run(args, env=env, check=True)
     if full:
