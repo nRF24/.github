@@ -105,18 +105,18 @@ def get_changelog(
         exe_name = (
             (GIT_CLIFF_CONFIG.parent.parent.parent / exe_name).resolve().as_posix()
         )
-    args = [exe_name, "--github-repo", f"nRF24/{Path.cwd().name}"]
+    args = [exe_name, "--use-branch-tags", "--github-repo", f"nRF24/{Path.cwd().name}"]
     if not full:
         args.append("--unreleased")
         output = str(RELEASE_NOTES)
-    if branch == "v1.x":
-        args.extend(["--ignore-tags", "[v|V]?2\\..*"])
     env = {
         "FIRST_COMMIT": first_commit,
         "GIT_CLIFF_CONFIG": str(GIT_CLIFF_CONFIG),
         "GIT_CLIFF_OUTPUT": str(output),
         "GIT_CLIFF_TAG": f"v{tag}",
     }
+    if not full:
+        env["GIT_CLIFF__CHANGELOG__HEADER"] = ""
     subprocess.run(args, env=env, check=True)
     if full:
         new = changelog.read_text(encoding="utf-8")
