@@ -21,6 +21,11 @@ on:
         type: string
         default: master
         description: git ref of the RF24Mesh lib dependency
+      examples-path:
+        required: false
+        type: string
+        default: examples_pico
+        description: The path to the Pico SDK examples. Defaults to `examples_pico`.
 
 
 jobs:
@@ -90,7 +95,7 @@ jobs:
         working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
         env:
           PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
-        run: cmake ../examples_pico -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPICO_BOARD=${{ inputs.board-id }}
+        run: cmake ../${{ inputs.examples-path }} -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPICO_BOARD=${{ inputs.board-id }}
 
       - name: Build
         working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
