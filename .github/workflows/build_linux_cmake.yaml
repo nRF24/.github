@@ -86,7 +86,7 @@ jobs:
           echo "deps=$lib_deps" >> $GITHUB_OUTPUT
 
       - name: checkout RF24
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: nRF24/RF24
           path: RF24
@@ -149,7 +149,7 @@ jobs:
 
       - name: checkout RF24Network
         if: contains(steps.lib-info.outputs.deps, 'RF24Network') || endsWith(github.repository, 'RF24Network')
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: nRF24/RF24Network
           path: RF24Network
@@ -168,7 +168,7 @@ jobs:
 
       - name: checkout RF24Mesh repo
         if: contains(steps.lib-info.outputs.deps, 'RF24Mesh') || endsWith(github.repository, 'RF24Mesh')
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: nRF24/RF24Mesh
           path: RF24Mesh
@@ -187,7 +187,7 @@ jobs:
 
       - name: checkout RF24Gateway repo
         if: endsWith(github.repository, 'RF24Gateway')
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: nRF24/RF24Gateway
           fetch-depth: 0  # for version number fetching in cmake
