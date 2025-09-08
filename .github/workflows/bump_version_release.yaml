@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       repo:
+        description: >-
+          The name of the nRF24 project to deploy.
         type: choice
         required: true
         options:
@@ -16,10 +18,14 @@ on:
           - "CircuitPython_nRF24L01"
           - "pyRF24"
       branch:
+        description: >-
+          The name of the `project` default branch from which to deploy.
         type: string
         required: true
         default: master
       bump-component:
+        description: >-
+          Which version component should be bumped?
         type: choice
         default: 'patch'
         required: true
