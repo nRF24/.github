@@ -48,7 +48,7 @@ jobs:
           echo "deps=$lib_deps" >> $GITHUB_OUTPUT
 
       - name: checkout RF24 lib
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: nRF24/RF24
           path: RF24
@@ -56,7 +56,7 @@ jobs:
 
       - name: checkout RF24Network lib
         if: contains(steps.lib-info.outputs.deps, 'RF24Network') || endsWith(github.repository, 'RF24Network')
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: nRF24/RF24Network
           path: RF24Network
@@ -64,7 +64,7 @@ jobs:
 
       - name: checkout RF24Mesh lib
         if: endsWith(github.repository, 'RF24Mesh')
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: RF24Mesh
           ref: ${{ inputs.rf24mesh-ref }}
@@ -73,7 +73,7 @@ jobs:
         run: sudo apt update && sudo apt install gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
 
       - name: Clone pico-sdk
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: raspberrypi/pico-sdk
           # master branch is latest stable release
