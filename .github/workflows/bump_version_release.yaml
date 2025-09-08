@@ -48,7 +48,7 @@ jobs:
         with:
           path: org-repo
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           # here we need v3.10+
           python-version: 3.x

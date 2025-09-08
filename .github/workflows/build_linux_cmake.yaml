@@ -293,7 +293,7 @@ jobs:
       # cross-compiling a python C extension is better done with pypa/cibuildwheel action
       - name: Set up Python version used by boost.python
         if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ steps.symlink-boost-python.outputs.python-version }}
 
