@@ -217,7 +217,7 @@ jobs:
         run: sudo cpack
 
       - name: Save artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pkg_${{ steps.lib-info.outputs.name }}_${{ inputs.compiler }}_${{ inputs.driver }}
           path: |
