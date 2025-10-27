@@ -69,14 +69,14 @@ jobs:
         working-directory: docs
 
       - name: Save doxygen docs as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ needs.get-info.outputs.lib-name }}_doxygen_docs
           path: ${{ github.workspace }}/docs/html
 
       - name: Save doxygen XML as artifact
         if: needs.get-info.outputs.mk-sphinx == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ needs.get-info.outputs.lib-name }}_doxygen_xml
           path: ${{ github.workspace }}/docs/sphinx/xml
@@ -93,7 +93,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: download XML artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: ${{ needs.get-info.outputs.lib-name }}_doxygen_xml
           path: ${{ github.workspace }}/docs/sphinx/xml
@@ -106,7 +106,7 @@ jobs:
         run: sphinx-build sphinx _build
 
       - name: Save sphinx docs as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ needs.get-info.outputs.lib-name }}_sphinx_docs
           path: ${{ github.workspace }}/docs/_build
@@ -121,7 +121,7 @@ jobs:
         run: echo "name=$(echo ${{ github.repository }} | sed 's;.\+/;;')" >> $GITHUB_OUTPUT
 
       - name: downlod artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: ${{ needs.get-info.outputs.lib-name }}_doxygen_docs
           path: docs
