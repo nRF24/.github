@@ -1,0 +1,29 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  lint-ci:
+    name: CI Workflows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.x
+
+      - name: Run zizmor
+        env:
+          # only used to relaxed rate limits; no special permissions needed
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pipx run zizmor --format github ./

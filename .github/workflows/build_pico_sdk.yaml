@@ -27,54 +27,66 @@ on:
         default: examples_pico
         description: The path to the Pico SDK examples. Defaults to `examples_pico`.
 
+permissions: {}
 
 jobs:
   build:
     runs-on: ubuntu-latest
     env:
       # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-      BUILD_TYPE: Release
+      # this env var is supported by CMake as of v3.22+
+      CMAKE_BUILD_TYPE: Release
 
     steps:
-      - name: get repo info
+      - name: Get repo info
         id: lib-info
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
         run: |
-          lib_name=$(echo ${{ github.repository }} | sed 's;.\+/;;')
-          echo "name=$lib_name" >> $GITHUB_OUTPUT
+          echo "name=${REPO_NAME}" >> "${GITHUB_OUTPUT}"
           lib_deps=''
-          if [[ $lib_name == 'RF24Mesh' ]]; then
+          if [[ "${REPO_NAME}" == 'RF24Mesh' ]]; then
               lib_deps='RF24Network'
           fi
-          echo "deps=$lib_deps" >> $GITHUB_OUTPUT
+          echo "deps=${lib_deps}" >> "${GITHUB_OUTPUT}"
 
-      - name: checkout RF24 lib
+      - name: Checkout RF24 lib
         uses: actions/checkout@v6
         with:
+          persist-credentials: false
           repository: nRF24/RF24
           path: RF24
           ref: ${{ inputs.rf24-ref }}
 
-      - name: checkout RF24Network lib
+      - name: Checkout RF24Network lib
         if: contains(steps.lib-info.outputs.deps, 'RF24Network') || endsWith(github.repository, 'RF24Network')
         uses: actions/checkout@v6
         with:
+          persist-credentials: false
           repository: nRF24/RF24Network
           path: RF24Network
           ref: ${{ inputs.rf24network-ref }}
 
-      - name: checkout RF24Mesh lib
+      - name: Checkout RF24Mesh lib
         if: endsWith(github.repository, 'RF24Mesh')
         uses: actions/checkout@v6
         with:
+          persist-credentials: false
           path: RF24Mesh
           ref: ${{ inputs.rf24mesh-ref }}
 
       - name: Install toolchain
-        run: sudo apt update && sudo apt install gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
+        run: >-
+          sudo apt update &&
+          sudo apt install
+          gcc-arm-none-eabi
+          libnewlib-arm-none-eabi
+          build-essential
 
       - name: Clone pico-sdk
         uses: actions/checkout@v6
         with:
+          persist-credentials: false
           repository: raspberrypi/pico-sdk
           # master branch is latest stable release
           path: pico-sdk
@@ -86,28 +98,31 @@ jobs:
         run: git submodule update --init
 
       - name: Create Build Environment
-        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}
+        working-directory: ${{ github.workspace }}/${{ github.event.repository.name }}
         env:
           PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
-        run: cmake -E make_directory ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+          BUILD_DIR: ${{ github.workspace }}/${{ github.event.repository.name }}/build
+        run: cmake -E make_directory "${BUILD_DIR}"
 
       - name: Configure CMake
-        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+        working-directory: ${{ github.workspace }}/${{ github.event.repository.name }}/build
         env:
           PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
-        run: cmake ../${{ inputs.examples-path }} -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPICO_BOARD=${{ inputs.board-id }}
+          EXAMPLES_PATH: ../${{ inputs.examples-path }}
+          PICO_BOARD: ${{ inputs.board-id }}
+        run: cmake "${EXAMPLES_PATH}" -D PICO_BOARD="${PICO_BOARD}"
 
       - name: Build
-        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+        working-directory: ${{ github.workspace }}/${{ github.event.repository.name }}/build
         # Execute the build. You can specify a specific target with "--target <NAME>"
-        run: cmake --build . --config $BUILD_TYPE
+        run: cmake --build . --config "${CMAKE_BUILD_TYPE}"
 
       - name: Save artifact
         uses: actions/upload-artifact@v5
         with:
           name: examples_pico_${{ inputs.board-id }}
           path: |
-            ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build/*.uf2
-            ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build/*.elf
-          # ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build/*.hex
-          # ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build/*.bin
+            ${{ github.workspace }}/${{ github.event.repository.name }}/build/*.uf2
+            ${{ github.workspace }}/${{ github.event.repository.name }}/build/*.elf
+          # ${{ github.workspace }}/${{ github.event.repository.name }}/build/*.hex
+          # ${{ github.workspace }}/${{ github.event.repository.name }}/build/*.bin

@@ -8,7 +8,7 @@ from os import environ
 from pathlib import Path
 import re
 import subprocess
-from typing import cast, Tuple, List, Sequence, Dict
+from typing import cast, Tuple, List, Set, Dict
 import sys
 from difflib import unified_diff
 
@@ -26,7 +26,7 @@ def get_version() -> Tuple[VERSION_TUPLE, str]:
         capture_output=True,
         check=True,
     )
-    tags: Sequence[VERSION_TUPLE] = set()  # using a set to avoid duplicates
+    tags: Set[VERSION_TUPLE] = set()  # using a set to avoid duplicates
     tag_pattern = re.compile(r"tag:\s+(?:RF24)?v?(\d+\.\d+\.?[A-Za-z0-9-_]*)")
     for line in result.stdout.decode(encoding="utf-8").splitlines():
         ver_tags = cast(List[str], tag_pattern.findall(line))
@@ -40,10 +40,11 @@ def get_version() -> Tuple[VERSION_TUPLE, str]:
                 print(ver_tag, "is an incomplete version spec; appending zero(s)")
                 ver_tuple += (0,) * (3 - len(ver_tuple))
             tags.add(cast(VERSION_TUPLE, ver_tuple))
-    tags = sorted(tags)  # sort by version & converts to a list
-    tags.reverse()  # to iterate from newest to oldest versions
+    sorted_tags = sorted(tags)  # sort by version & converts to a list
+    sorted_tags.reverse()  # to iterate from newest to oldest versions
+
     print("found version tags:")
-    for tag in tags:
+    for tag in sorted_tags:
         print("    v" + ".".join([str(t) for t in tag]), flush=True)
 
     # get current branch
@@ -63,17 +64,17 @@ def get_version() -> Tuple[VERSION_TUPLE, str]:
     # filter tags and find the appropriate latest tag according to current branch
     if branch.endswith("1.x"):
         print("filtering tags for branch", branch)
-        for tag in tags:
+        for tag in sorted_tags:
             if tag[0] == 1:
-                ver_tag = tag
+                ret_ver = tag
                 break
         else:
             raise RuntimeError(f"Found no v1.x tags for branch {branch}")
     else:
         print("treating branch", repr(branch), "as latest stable branch", flush=True)
-        ver_tag = tags[0]
+        ret_ver = sorted_tags[0]
     print("Current version:", ".".join([str(x) for x in ver_tag]), flush=True)
-    return ver_tag, branch
+    return ret_ver, branch
 
 
 def increment_version(version: VERSION_TUPLE, bump: str = "patch") -> VERSION_TUPLE:
@@ -84,7 +85,7 @@ def increment_version(version: VERSION_TUPLE, bump: str = "patch") -> VERSION_TU
     # zero out minor and patch components if needed
     for i in range(component + 1, len(COMPONENTS)):
         new_ver[i] = 0
-    return tuple(new_ver)
+    return (new_ver[0], new_ver[1], new_ver[2])
 
 
 def get_changelog(
@@ -108,7 +109,7 @@ def get_changelog(
     args = [exe_name, "--use-branch-tags", "--github-repo", f"nRF24/{Path.cwd().name}"]
     if not full:
         args.append("--unreleased")
-        output = str(RELEASE_NOTES)
+        output = RELEASE_NOTES
     env = {
         "FIRST_COMMIT": first_commit,
         "GIT_CLIFF_CONFIG": str(GIT_CLIFF_CONFIG),
@@ -155,14 +156,14 @@ def update_metadata_files(version: str) -> bool:
     if arduino_meta_file.exists():
         # simple search and replace
         ver_pattern = re.compile(r"version=(\d+\.\d+\.?\d*)")
-        data = arduino_meta_file.read_text(encoding="utf-8")
-        ver_match = ver_pattern.search(data)
+        ini_data = arduino_meta_file.read_text(encoding="utf-8")
+        ver_match = ver_pattern.search(ini_data)
         assert ver_match is not None, "could not find version in " + str(
             arduino_meta_file
         )
         if ver_match.group(1) != version:
-            data = ver_pattern.sub(f"version={version}", data)
-            arduino_meta_file.write_text(data, encoding="utf-8", newline="\n")
+            ini_data = ver_pattern.sub(f"version={version}", ini_data)
+            arduino_meta_file.write_text(ini_data, encoding="utf-8", newline="\n")
             made_changes = True
 
     return made_changes

@@ -12,11 +12,20 @@ on:
         type: string
         default: c,h,cpp,hpp
 
+permissions: {}
+
 jobs:
   cpp_linter:
     runs-on: ubuntu-latest
+    permissions:
+      # allow cpp-linter to post suggestions in PR reviews
+      pull-requests: write
+      # allow cpp-linter to detect which files changed
+      contents: read
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v6
         with:
           python-version: 3.x
@@ -24,18 +33,20 @@ jobs:
         run: sudo apt-get install clang-format-14
       - name: Install linter python package
         run: python3 -m pip install 'cpp-linter>=1.7.1'
-      - name: run linter as a python package
+      - name: Run cpp-linter (python package)
         id: linter
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IGNORE: ${{ inputs.ignore }}
+          EXTENSIONS: ${{ inputs.extensions }}
         run: >-
           cpp-linter
           --version=14
           --style=file
           --tidy-checks='-*'
           --lines-changed-only=true
-          --extensions=${{ inputs.extensions }}
-          --ignore='${{ inputs.ignore }}'
+          --extensions=${EXTENSIONS}
+          --ignore="${IGNORE}"
           --format-review=true
           --file-annotations=false
           --step-summary=true

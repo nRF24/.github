@@ -40,78 +40,85 @@ on:
         default: master
         description: git ref of the RF24Mesh lib dependency
 
+permissions: {}
+
 jobs:
   build:
     runs-on: ubuntu-latest
     env:
       RF24_DRIVER: ${{ inputs.driver }}
       # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-      BUILD_TYPE: Release
+      # This env var is supported by CMake as of v3.22+
+      CMAKE_BUILD_TYPE: Release
     steps:
-      # - name: provide toolchain (for x86_64)
+      # - name: Provide toolchain (for x86_64)
       #   if: ${{ inputs.compiler == 'x86_64' }}
       #   run: |
       #     sudo apt-get update
       #     sudo apt-get install gcc-x86-64-linux-gnux32 g++-x86-64-linux-gnux32
 
-      # - name: provide toolchain (for i686)
+      # - name: Provide toolchain (for i686)
       #   if: ${{ inputs.compiler == 'i686' }}
       #   run: |
       #     sudo apt-get update
       #     sudo apt-get install gcc-i686-linux-gnu g++-i686-linux-gnu
 
-      - name: provide toolchain (for arm64)
+      - name: Provide toolchain (for arm64)
         if: ${{ inputs.compiler == 'arm64' }}
         run: |
           sudo apt-get update
           sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
-      - name: provide toolchain (for armhf)
+      - name: Provide toolchain (for armhf)
         if: ${{ inputs.compiler == 'armhf' }}
         run: |
           sudo apt-get update
           sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
 
-      - name: get repo info
+      - name: Get repo info
         id: lib-info
-        run: |
-          lib_name=$(echo ${{ github.repository }} | sed 's;.\+/;;')
-          echo "name=$lib_name" >> $GITHUB_OUTPUT
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |-
           lib_deps=''
-          if [[ $lib_name == 'RF24Mesh' ]]; then
+          if [[ "${REPO_NAME}" == 'RF24Mesh' ]]; then
               lib_deps='RF24Network'
-          elif [[ $lib_name == 'RF24Gateway' ]]; then
+          elif [[ "${REPO_NAME}" == 'RF24Gateway' ]]; then
               lib_deps='RF24Network;RF24Mesh'
           fi
-          echo "deps=$lib_deps" >> $GITHUB_OUTPUT
+          echo "deps=$lib_deps" >> "${GITHUB_OUTPUT}"
 
-      - name: checkout RF24
+      - name: Checkout RF24
         uses: actions/checkout@v6
         with:
+          persist-credentials: false
           repository: nRF24/RF24
           path: RF24
           ref: ${{ inputs.rf24-ref }}
 
-      - name: provide MRAA
+      - name: Provide MRAA
         if: inputs.driver == 'MRAA'
-        run: |
+        env:
+          # this env var is supported as of CMake v3.29+
+          CMAKE_INSTALL_PREFIX: /usr/${{ inputs.usr-dir }}
+          # this env var is supported as of CMake v3.21+
+          CMAKE_TOOLCHAIN_FILE: ${{ github.workspace }}/RF24/cmake/toolchains/${{ inputs.compiler }}.cmake
+        run: |-
           git clone https://github.com/intel-iot-devkit/mraa.git
           cd mraa
           mkdir build
           cd build
-          cmake .. -D BUILDSWIGNODE=OFF \
-          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr-dir }} \
-          -D CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/RF24/cmake/toolchains/${{ inputs.compiler }}.cmake
+          cmake .. -D BUILDSWIGNODE=OFF
           sudo make install
 
-      - name: provide WiringPi
+      - name: Provide WiringPi
         if: inputs.driver == 'wiringPi' && inputs.compiler == 'default'
-        run: |
+        run: |-
           git clone https://github.com/WiringPi/WiringPi
           cd WiringPi
           ./build
 
-      # - name: provide WiringPi (with toolchain compilers)
+      # - name: Provide WiringPi (with toolchain compilers)
       #   if: inputs.driver == 'wiringPi' && inputs.compiler != 'default'
       #   env:
       #     CC: /usr/bin/${{ inputs.usr-dir }}-gcc
@@ -121,9 +128,14 @@ jobs:
       #     cd WiringPi
       #     ./build
 
-      - name: provide pigpio
+      - name: Provide pigpio
         if: inputs.driver == 'pigpio'
-        run: |
+        env:
+          # this env var is supported as of CMake v3.29+
+          CMAKE_INSTALL_PREFIX: /usr/${{ inputs.usr-dir }}
+          # this env var is supported as of CMake v3.21+
+          CMAKE_TOOLCHAIN_FILE: ${{ github.workspace }}/RF24/cmake/toolchains/${{ inputs.compiler }}.cmake
+        run: |-
           git clone https://github.com/joan2937/pigpio.git
           cd pigpio
           git fetch --tags
@@ -131,173 +143,196 @@ jobs:
           git checkout $latestTag
           mkdir build
           cd build
-          cmake .. -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr-dir }} \
-          -D CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/RF24/cmake/toolchains/${{ inputs.compiler }}.cmake
+          cmake .. 
           make
           sudo make install
 
-      - name: build & install RF24
+      - name: Build & install RF24
         if: endsWith(github.repository, 'RF24') == false
         working-directory: RF24
-        run: |
+        env:
+          # this env var is supported as of CMake v3.29+
+          CMAKE_INSTALL_PREFIX: /usr/${{ inputs.usr-dir }}
+          # this env var is supported as of CMake v3.21+
+          CMAKE_TOOLCHAIN_FILE: cmake/toolchains/${{ inputs.compiler }}.cmake
+        run: |-
           mkdir build
           cd build
-          cmake .. -D CMAKE_BUILD_TYPE=$BUILD_TYPE \
-          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr-dir }} \
-          -D CMAKE_TOOLCHAIN_FILE=cmake/toolchains/${{ inputs.compiler }}.cmake
+          cmake ..
           sudo make install
 
-      - name: checkout RF24Network
+      - name: Checkout RF24Network
         if: contains(steps.lib-info.outputs.deps, 'RF24Network') || endsWith(github.repository, 'RF24Network')
         uses: actions/checkout@v6
         with:
+          persist-credentials: false
           repository: nRF24/RF24Network
           path: RF24Network
           ref: ${{ inputs.rf24network-ref }}
 
-      - name: build & install RF24Network
+      - name: Build & install RF24Network
         if: contains(steps.lib-info.outputs.deps, 'RF24Network')
         working-directory: RF24Network
-        run: |
+        env:
+          # these env vars are supported as of CMake v3.29+
+          CMAKE_INSTALL_PREFIX: /usr/${{ inputs.usr-dir }}
+          # this env var is supported as of CMake v3.21+
+          CMAKE_TOOLCHAIN_FILE: cmake/toolchains/${{ inputs.compiler }}.cmake
+        run: |-
           mkdir build
           cd build
-          cmake .. -D CMAKE_BUILD_TYPE=$BUILD_TYPE \
-          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr-dir }} \
-          -D CMAKE_TOOLCHAIN_FILE=cmake/toolchains/${{ inputs.compiler }}.cmake
+          cmake ..
           sudo make install
 
-      - name: checkout RF24Mesh repo
+      - name: Checkout RF24Mesh repo
         if: contains(steps.lib-info.outputs.deps, 'RF24Mesh') || endsWith(github.repository, 'RF24Mesh')
         uses: actions/checkout@v6
         with:
+          persist-credentials: false
           repository: nRF24/RF24Mesh
           path: RF24Mesh
           ref: ${{ inputs.rf24mesh-ref }}
 
-      - name: build & install RF24Mesh
+      - name: Build & install RF24Mesh
         working-directory: RF24Mesh
         if: contains(steps.lib-info.outputs.deps, 'RF24Mesh')
-        run: |
+        env:
+          # these env vars are supported as of CMake v3.29+
+          CMAKE_INSTALL_PREFIX: /usr/${{ inputs.usr-dir }}
+          # this env var is supported as of CMake v3.21+
+          CMAKE_TOOLCHAIN_FILE: cmake/toolchains/${{ inputs.compiler }}.cmake
+        run: |-
           mkdir build
           cd build
-          cmake .. -D CMAKE_BUILD_TYPE=$BUILD_TYPE \
-          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr-dir }} \
-          -D CMAKE_TOOLCHAIN_FILE=cmake/toolchains/${{ inputs.compiler }}.cmake
+          cmake ..
           sudo make install
 
-      - name: checkout RF24Gateway repo
+      - name: Checkout RF24Gateway repo
         if: endsWith(github.repository, 'RF24Gateway')
         uses: actions/checkout@v6
         with:
+          persist-credentials: false
           repository: nRF24/RF24Gateway
           fetch-depth: 0  # for version number fetching in cmake
           path: RF24Gateway
           ref: ${{ github.sha }}
 
-      - name: create CMake build environment
-        run: cmake -E make_directory ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+      - name: Create CMake build environment
+        env:
+          BUILD_DIR: ${{ github.workspace }}/${{ github.event.repository.name }}/build
+        run: cmake -E make_directory "${BUILD_DIR}"
 
-      - name: configure lib
-        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
-        run: |
-          cmake .. -D CMAKE_BUILD_TYPE=$BUILD_TYPE \
-          -D CMAKE_INSTALL_PREFIX=/usr/${{ inputs.usr-dir }} \
-          -D CMAKE_TOOLCHAIN_FILE=cmake/toolchains/${{ inputs.compiler }}.cmake
+      - name: Configure lib
+        working-directory: ${{ github.workspace }}/${{ github.event.repository.name }}/build
+        env:
+          # these env vars are supported as of CMake v3.29+
+          CMAKE_INSTALL_PREFIX: /usr/${{ inputs.usr-dir }}
+          # this env var is supported as of CMake v3.21+
+          CMAKE_TOOLCHAIN_FILE: cmake/toolchains/${{ inputs.compiler }}.cmake
+        run: cmake ..
 
-      - name: build lib
-        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+      - name: Build lib
+        working-directory: ${{ github.workspace }}/${{ github.event.repository.name }}/build
         run: cmake --build .
 
-      - name: install lib
-        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+      - name: Install lib
+        working-directory: ${{ github.workspace }}/${{ github.event.repository.name }}/build
         run: sudo cmake --install .
 
-      - name: package lib
-        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+      - name: Package lib
+        working-directory: ${{ github.workspace }}/${{ github.event.repository.name }}/build
         run: sudo cpack
 
       - name: Save artifact
         uses: actions/upload-artifact@v5
         with:
-          name: pkg_${{ steps.lib-info.outputs.name }}_${{ inputs.compiler }}_${{ inputs.driver }}
-          path: |
-            ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build/pkgs/*.deb
-            ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build/pkgs/*.rpm
+          name: pkg_${{ github.event.repository.name }}_${{ inputs.compiler }}_${{ inputs.driver }}
+          path: |-
+            ${{ github.workspace }}/${{ github.event.repository.name }}/build/pkgs/*.deb
+            ${{ github.workspace }}/${{ github.event.repository.name }}/build/pkgs/*.rpm
 
-      - name: Upload Release assets
-        if: inputs.deploy-release
-        uses: shogo82148/actions-upload-release-asset@v1
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: "${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build/pkgs/librf24*"
-
-      - name: clean build environment
+      - name: Clean build environment
         if: inputs.examples-path != ''
-        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+        working-directory: ${{ github.workspace }}/${{ github.event.repository.name }}/build
         run: sudo rm -r ./*
 
-      - name: provide ncurses
-        if: inputs.examples-path != ''
+      - name: Provide ncurses
+        # only done for native compilation because cross-compiling ncurses from
+        # source is prone to linker errors and takes a long time.
+        if: inputs.examples-path != '' && inputs.compiler == 'default'
         # This script assumes that any examples using ncurses reside in a 'ncurses' subdirectory
         # as is the case w/ RF24Mesh, RF24Gateway, and any new ncurses examples going forward.
-        run: |
-          if [[ -d ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/${{ inputs.examples-path }}/ncurses ]]; then
-            if [[ ${{ inputs.compiler }} == 'default' ]]; then
-              sudo apt-get install libncurses5-dev
-            else
-              echo "skipping the ncurses examples for cross-compiled builds"
-
-              # avoid cross-compiling linker problems in CI; this works locally but takes a while to build
-              # curl -L https://invisible-island.net/datafiles/release/ncurses.tar.gz > ncurses.tar.gz
-              # gunzip ncurses.tar.gz
-              # tar xf ncurses.tar
-              # cd ncurses-*
-              # ./configure --prefix=/usr/${{ inputs.usr-dir }} --build=${{ inputs.usr-dir }}
-              # make
-              # sudo make install
-            fi
+        env:
+          EXAMPLES_PATH: ${{ github.workspace }}/${{ github.event.repository.name }}/${{ inputs.examples-path }}/ncurses
+        run: |-
+          if [[ -d "${EXAMPLES_PATH}" ]]; then
+            sudo apt-get install libncurses5-dev
           else
             echo "ncurses is not needed for these examples"
           fi
 
-      - name: configure examples
+      - name: Configure examples
         if: inputs.examples-path != ''
-        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
-        run: |
-          cmake ../${{ inputs.examples-path }} \
-          -D CMAKE_TOOLCHAIN_FILE=../cmake/toolchains/${{ inputs.compiler }}.cmake
+        working-directory: ${{ github.workspace }}/${{ github.event.repository.name }}/build
+        env:
+          # this env var is supported as of CMake v3.21+
+          CMAKE_TOOLCHAIN_FILE: cmake/toolchains/${{ inputs.compiler }}.cmake
+          EXAMPLES_PATH: ../${{ inputs.examples-path }}
+        run: cmake "${EXAMPLES_PATH}"
 
-      - name: build examples
+      - name: Build examples
         if: inputs.examples-path != ''
-        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/build
+        working-directory: ${{ github.workspace }}/${{ github.event.repository.name }}/build
         # doesn't build the RF24Mesh_Ncurses_Master example because we haven't cross-compiled it in this workflow
         run: cmake --build .
 
-      - name: provide python wrapper prerequisites
+      - name: Provide python wrapper prerequisites
         if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
         # python3-rpi.gpio is only required for physical hardware (namely the IRQ example)
         run: sudo apt-get install python3-dev libboost-python-dev python3-setuptools
 
-      - name: create alias symlink to libboost_python3*.so
+      - name: Create alias symlink to libboost_python3*.so
         if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
         id: symlink-boost-python
-        run: |
+        run: |-
           arch=$(ls /usr/lib/gcc | tail -1)
           arch_libs=/usr/lib/$arch
           boost_python_so=$(ls $arch_libs/libboost_python3*.so | tail -1)
           py_ver=$(echo $boost_python_so | sed -E 's/.*libboost_python([0-9])([0-9]+)\.so/\1.\2/')
-          echo "python version used by boost.pytrhon is $py_ver"
-          echo "python-version=$py_ver" >> $GITHUB_OUTPUT
+          echo "python version used by boost.python is $py_ver"
+          echo "python-version=$py_ver" >> "${GITHUB_OUTPUT}"
           sudo ln -s $boost_python_so $arch_libs/libboost_python3.so
 
-      # cross-compiling a python C extension is better done with pypa/cibuildwheel action
       - name: Set up Python version used by boost.python
         if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
         uses: actions/setup-python@v6
         with:
           python-version: ${{ steps.symlink-boost-python.outputs.python-version }}
 
-      - name: install python wrapper
+      - name: Install python wrapper
         if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
-        working-directory: ${{ github.workspace }}/${{ steps.lib-info.outputs.name }}/${{ inputs.py-wrapper-path }}
+        working-directory: ${{ github.workspace }}/${{ github.event.repository.name }}/${{ inputs.py-wrapper-path }}
         run: python3 -m pip install .
+
+  upload-release-assets:
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: inputs.deploy-release
+    permissions:
+      # allow uploading release assets
+      contents: write
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v5
+        with:
+          pattern: pkg_${{ github.event.repository.name }}_*
+          path: ./artifacts
+          merge-multiple: true
+
+      - name: Upload Release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}          
+        run: |-
+          files=$(ls artifacts/*.deb artifacts/*.rpm)
+          gh release upload "${TAG}" ${files}

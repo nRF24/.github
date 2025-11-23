@@ -34,6 +34,7 @@ on:
         default: master
         description: git ref of the RF24Mesh lib dependency
 
+permissions: {}
 
 jobs:
   run_pio:
@@ -44,8 +45,7 @@ jobs:
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          restore-keys: ${{ runner.os }}-pip-
 
       # - name: Cache PlatformIO
       #   uses: actions/cache@v4
@@ -61,18 +61,21 @@ jobs:
           python-version: 3.x
 
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
-      - name: get lib info
+      - name: Get lib info
         id: lib-info
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
         run: |
-          lib_name=$(echo ${{ github.repository }} | sed -e 's;.\+/;;')
           rf24_deps=''
-          if [[ $lib_name == 'RF24Mesh' ]]; then
+          if [[ "${REPO_NAME}" == 'RF24Mesh' ]]; then
             rf24_deps=RF24Network
-          elif [[ $lib_name == 'RF24Ethernet' ]]; then
+          elif [[ "${REPO_NAME}" == 'RF24Ethernet' ]]; then
             rf24_deps='RF24Network;RF24Mesh'
           fi
-          echo "rf24-deps=$rf24_deps" >> $GITHUB_OUTPUT
+          echo "rf24-deps=$rf24_deps" >> "${GITHUB_OUTPUT}"
 
       - name: Install PlatformIO
         run: |
@@ -81,21 +84,30 @@ jobs:
 
       - name: Install extra dependencies
         if: inputs.lib-deps != ''
-        run: pio pkg install -g ${{ inputs.lib-deps }}
+        env:
+          LIB_DEPS: ${{ inputs.lib-deps }}
+        run: pio pkg install -g ${LIB_DEPS}
 
       - name: Install RF24Mesh library dependency
         if: contains(steps.lib-info.outputs.rf24-deps, 'RF24Mesh') && !endsWith(github.repository, 'RF24Mesh')
-        run: pio pkg install -g -f --skip-dependencies -l 'https://github.com/nRF24/RF24Mesh.git#${{ inputs.rf24mesh-ref }}'
+        env:
+          RF24MESH_REF: ${{ inputs.rf24mesh-ref }}
+        run: pio pkg install -g -f --skip-dependencies -l "https://github.com/nRF24/RF24Mesh.git#${RF24MESH_REF}"
 
       - name: Install RF24Network library dependency
         if: contains(steps.lib-info.outputs.rf24-deps, 'RF24Network') && !endsWith(github.repository, 'RF24Network')
-        run: pio pkg install -g -f --skip-dependencies -l 'https://github.com/nRF24/RF24Network.git#${{ inputs.rf24network-ref }}'
+        env:
+          RF24NETWORK_REF: ${{ inputs.rf24network-ref }}
+        run: pio pkg install -g -f --skip-dependencies -l "https://github.com/nRF24/RF24Network.git#${RF24NETWORK_REF}"
 
       - name: Install RF24 library dependency
         if: endsWith(github.repository, 'RF24') == false
-        run: pio pkg install -g -f --skip-dependencies -l 'https://github.com/nRF24/RF24.git#${{ inputs.rf24-ref }}'
+        env:
+          RF24_REF: ${{ inputs.rf24-ref }}
+        run: pio pkg install -g -f --skip-dependencies -l "https://github.com/nRF24/RF24.git#${RF24_REF}"
 
       - name: Run PlatformIO
-        run: pio ci --lib="." --board=${{ inputs.board-id }}
         env:
           PLATFORMIO_CI_SRC: ${{ inputs.example-path }}
+          BOARD: ${{ inputs.board-id }}
+        run: pio ci --lib="." --board="${BOARD}"

@@ -73,15 +73,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       
-      - name: sketch reports
+      - name: Delta reports' artifact name
         if: inputs.enable-deltas-report
         id: delta-report-name
+        env:
+          FQBN: ${{ inputs.fqbn }}
         run: >-
-          echo "report-name=${{ inputs.fqbn }}" | tr : - >> "$GITHUB_OUTPUT"
+          echo "report-name=${FQBN}" | tr : - >> "${GITHUB_OUTPUT}"
 
       - name: Compile examples
-        uses: arduino/compile-sketches@main
+        uses: arduino/compile-sketches@8ac27e99289705c4abec832089575d687b859227 # v1.1.2
         with:
           # cli-version: '0.33.0'
           sketch-paths: ${{ inputs.sketch-paths }}
