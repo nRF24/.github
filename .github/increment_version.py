@@ -9,6 +9,7 @@ from pathlib import Path
 import re
 import subprocess
 from typing import cast, Tuple, List, Set, Dict
+from shutil import which
 import sys
 from difflib import unified_diff
 
@@ -73,7 +74,7 @@ def get_version() -> Tuple[VERSION_TUPLE, str]:
     else:
         print("treating branch", repr(branch), "as latest stable branch", flush=True)
         ret_ver = sorted_tags[0]
-    print("Current version:", ".".join([str(x) for x in ver_tag]), flush=True)
+    print("Current version:", ".".join([str(x) for x in ret_ver]), flush=True)
     return ret_ver, branch
 
 
@@ -101,11 +102,9 @@ def get_changelog(
     if full:
         old = changelog.read_text(encoding="utf-8")
     output = changelog
-    exe_name = "git-cliff"
-    if environ.get("CI", "false") == "true":
-        exe_name = (
-            (GIT_CLIFF_CONFIG.parent.parent.parent / exe_name).resolve().as_posix()
-        )
+    exe_name = which("git-cliff")
+    assert exe_name is not None, "git-cliff executable not found in PATH"
+    exe_name = Path(exe_name).as_posix()
     args = [exe_name, "--use-branch-tags", "--github-repo", f"nRF24/{Path.cwd().name}"]
     if not full:
         args.append("--unreleased")
@@ -116,12 +115,14 @@ def get_changelog(
         "GIT_CLIFF_OUTPUT": str(output),
         "GIT_CLIFF_TAG": f"v{tag}",
     }
+    if "GITHUB_TOKEN" in environ:
+        env["GITHUB_TOKEN"] = environ["GITHUB_TOKEN"]
     if not full:
         env["GIT_CLIFF__CHANGELOG__HEADER"] = ""
     subprocess.run(args, env=env, check=True)
     if full:
         new = changelog.read_text(encoding="utf-8")
-        changes = list(unified_diff(old, new))
+        changes = list(unified_diff(old.splitlines(), new.splitlines()))
         return len(changes) != 0
     return False
 

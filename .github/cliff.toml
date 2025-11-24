@@ -95,6 +95,7 @@ commit_preprocessors = [
 ]
 # regex for parsing and grouping commits
 commit_parsers = [
+    # The order of parsers matters. Put rules for PR labels first to prioritize PR labels.
     { field = "github.pr_labels", pattern = "breaking", group = "<!-- 0 --> 💥 Breaking changes" },
     { field = "github.pr_labels", pattern = "breaking-change", group = "<!-- 0 --> 💥 Breaking changes" },
     { field = "github.pr_labels", pattern = "feature", group = "<!-- 1 --> 🚀 Added" },
@@ -111,7 +112,24 @@ commit_parsers = [
     { field = "github.pr_labels", pattern = "skip-changelog", skip = true },
     { field = "github.pr_labels", pattern = "no-changelog", skip = true },
     { field = "github.pr_labels", pattern = "invalid", skip = true },
-    # The order of parsers matters. Put rules for PR labels first to prioritize PR labels.
+    # Here are rules that apply to conventional commits
+    { field = "group", pattern = "add", group = "<!-- 1 --> 🚀 Added" },
+    { field = "group", pattern = "feat", group = "<!-- 1 --> 🚀 Added" },
+    { field = "group", pattern = "fix", group = "<!-- 4 --> 🛠️ Fixed" },
+    { field = "group", pattern = "perf", group = "<!-- 13 --> ⚡ Performance" },
+    { field = "group", pattern = "build", group = "<!-- 6 --> 📦 Dependency updates" },
+    { field = "group", pattern = "test", group = "<!-- 7 --> 🚦 Tests" },
+    { field = "group", pattern = "docs", group = "<!-- 8 --> 📝 Documentation" },
+    { field = "group", pattern = "chore", group = "<!-- 9 --> 🗨️ Changed" },
+    { field = "group", pattern = "style", group = "<!-- 9 --> 🗨️ Changed" },
+    # This rule seems broken when unconventional commits are involved.
+    # { field = "breaking", pattern = true, group = "<!-- 0 --> 💥 Breaking changes" },
+    { field = "group", pattern = "remove", group = "<!-- 3 --> 🗑️ Removed" },
+    { field = "group", pattern = "deprecate", group = "<!-- 2 --> 🚫 Deprecated" },
+    { field = "group", pattern = "delete", group = "<!-- 3 --> 🗑️ Removed" },
+    { field = "group", pattern = "security", group = "<!-- 5 --> 🔐 Security" },
+    { field = "group", pattern = "refactor", group = "<!-- 9 --> 🗨️ Changed" },
+    # Here are rules that apply to unconventional commits
     { message = "^[a|A]dd", group = "<!-- 1 --> 🚀 Added" },
     { message = "^[s|S]upport", group = "<!-- 1 --> 🚀 Added" },
     { message = "^.*: support", group = "<!-- 1 --> 🚀 Added" },
