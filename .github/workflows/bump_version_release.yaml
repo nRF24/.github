@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout ${{ inputs.repo }}
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: nRF24/${{ inputs.repo }}
           ref: ${{ inputs.branch }}
@@ -50,7 +50,7 @@ jobs:
           token: ${{ secrets.BUMP_N_RELEASE }}
 
       - name: checkout org repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: org-repo
 
