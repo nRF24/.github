@@ -15,7 +15,7 @@ on:
         description: |
           A space delimited string of lib names to install as extra dependencies.
           UPDATE: Each lib specified should be prefixed with a `-l ` like so: `-l <lib_spec>`.
-             This also allows for exra tools/frameworks/etc. See docs at
+             This also allows for extra tools/frameworks/etc. See docs at
              https://docs.platformio.org/en/latest/core/userguide/pkg/cmd_install.html
           NOTE: RF24 dependencies are automatically installed accordingly.
       rf24-ref:

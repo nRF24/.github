@@ -30,7 +30,7 @@ on:
           - source-url: https://github.com/<owner>/<repo>.git
             version: <branch_name>
           ```
-          Otherwise, just the lib's name in the Arduino Lib Manager will suffic:
+          Otherwise, just the lib's name in the Arduino Lib Manager will suffice:
           ```yml
           - source-url: https://github.com/nRF24/RF24Network.git
             version: master
