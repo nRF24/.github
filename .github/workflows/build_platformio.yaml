@@ -40,29 +40,22 @@ jobs:
   run_pio:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - name: Cache pip
         uses: actions/cache@v4
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: ${{ runner.os }}-pip-
-
-      # - name: Cache PlatformIO
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: |
-      #       ~/.cache/pip
-      #       ~/.platformio/.cache
-      #     key: ${{ runner.os }}-pio
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio-${{ inputs.board-id }}-${{ inputs.example-path }}
 
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: 3.x
-
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
 
       - name: Get lib info
         id: lib-info
@@ -78,9 +71,7 @@ jobs:
           echo "rf24-deps=$rf24_deps" >> "${GITHUB_OUTPUT}"
 
       - name: Install PlatformIO
-        run: |
-          python -m pip install --upgrade pip
-          pip install --upgrade platformio
+        run: pip install --upgrade platformio
 
       - name: Install extra dependencies
         if: inputs.lib-deps != ''
@@ -92,19 +83,25 @@ jobs:
         if: contains(steps.lib-info.outputs.rf24-deps, 'RF24Mesh') && !endsWith(github.repository, 'RF24Mesh')
         env:
           RF24MESH_REF: ${{ inputs.rf24mesh-ref }}
-        run: pio pkg install -g -f --skip-dependencies -l "https://github.com/nRF24/RF24Mesh.git#${RF24MESH_REF}"
+        run: >-
+          pio pkg install -g -f --skip-dependencies
+          -l "https://github.com/nRF24/RF24Mesh.git#${RF24MESH_REF}"
 
       - name: Install RF24Network library dependency
         if: contains(steps.lib-info.outputs.rf24-deps, 'RF24Network') && !endsWith(github.repository, 'RF24Network')
         env:
           RF24NETWORK_REF: ${{ inputs.rf24network-ref }}
-        run: pio pkg install -g -f --skip-dependencies -l "https://github.com/nRF24/RF24Network.git#${RF24NETWORK_REF}"
+        run: >-
+          pio pkg install -g -f --skip-dependencies
+          -l "https://github.com/nRF24/RF24Network.git#${RF24NETWORK_REF}"
 
       - name: Install RF24 library dependency
         if: endsWith(github.repository, 'RF24') == false
         env:
           RF24_REF: ${{ inputs.rf24-ref }}
-        run: pio pkg install -g -f --skip-dependencies -l "https://github.com/nRF24/RF24.git#${RF24_REF}"
+        run: >-
+          pio pkg install -g -f --skip-dependencies
+          -l "https://github.com/nRF24/RF24.git#${RF24_REF}"
 
       - name: Run PlatformIO
         env:

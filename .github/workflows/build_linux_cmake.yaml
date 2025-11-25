@@ -276,7 +276,7 @@ jobs:
         working-directory: ${{ github.workspace }}/${{ github.event.repository.name }}/build
         env:
           # this env var is supported as of CMake v3.21+
-          CMAKE_TOOLCHAIN_FILE: cmake/toolchains/${{ inputs.compiler }}.cmake
+          CMAKE_TOOLCHAIN_FILE: ../cmake/toolchains/${{ inputs.compiler }}.cmake
           EXAMPLES_PATH: ../${{ inputs.examples-path }}
         run: cmake "${EXAMPLES_PATH}"
 
