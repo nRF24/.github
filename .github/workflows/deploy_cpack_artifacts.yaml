@@ -1,0 +1,31 @@
+name: Upload release assets
+
+on:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  upload-assets:
+    runs-on: ubuntu-latest
+    permissions:
+      # needed to upload release assets
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v6
+        with:
+          # This pattern downloads any artifacts built for armhf or arm64 targets.
+          # However, it also downloads artifacts built against pigpio and MRAA drivers.
+          pattern: pkg_${{ github.event.repository.name }}_arm*
+          path: artifacts
+          merge-multiple: true
+
+      - name: Upload Release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        # Only upload artifacts that were built against RPi and SPIDEV drivers.
+        run: |-
+          files=$(ls artifacts/*RPi*.deb artifacts/*SPIDEV*.deb artifacts/*RPi*.rpm artifacts/*SPIDEV*.rpm)
+          gh release upload "${TAG}" ${files}
