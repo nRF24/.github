@@ -47,7 +47,7 @@ jobs:
       - name: Cache pip
         uses: actions/cache@v4
         with:
-          path: |
+          path: |-
             ~/.cache/pip
             ~/.platformio/.cache
           key: ${{ runner.os }}-pio-${{ inputs.board-id }}-${{ inputs.example-path }}
@@ -61,7 +61,7 @@ jobs:
         id: lib-info
         env:
           REPO_NAME: ${{ github.event.repository.name }}
-        run: |
+        run: |-
           rf24_deps=''
           if [[ "${REPO_NAME}" == 'RF24Mesh' ]]; then
             rf24_deps=RF24Network

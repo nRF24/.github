@@ -68,7 +68,7 @@ jobs:
 
       - name: Provide toolchain (for armhf)
         if: ${{ inputs.compiler == 'armhf' }}
-        run: |
+        run: |-
           sudo apt-get update
           sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
 

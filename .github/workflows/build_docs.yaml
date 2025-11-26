@@ -63,7 +63,7 @@ jobs:
         working-directory: docs
         env:
           LIB_VERSION: ${{ needs.get-info.outputs.lib-version }}
-        run: |
+        run: |-
           touch doxygenAction
           echo "PROJECT_NUMBER = ${LIB_VERSION}" >> doxygenAction
           echo -e "\n@INCLUDE = doxygenAction" >> Doxyfile
