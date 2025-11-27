@@ -1,0 +1,28 @@
+version: "0.2"
+words:
+  - adafruit
+  - armhf
+  - bndy
+  - BUILDSWIGNODE
+  - CFLAGS
+  - cpack
+  - Doxyfile
+  - elif
+  - fqbn
+  - gnueabihf
+  - gnux
+  - libboost
+  - libclang
+  - libncurses
+  - mbed
+  - megaavr
+  - MQTT
+  - MRAA
+  - pigpio
+  - pipx
+  - pkgs
+  - samd
+  - Seeeduino
+  - setuptools
+  - SPIDEV
+  - zizmor

@@ -36,62 +36,72 @@ on:
 
 run-name: Deploying ${{ inputs.repo }} ${{ inputs.branch }}
 
+permissions: {}
+
 jobs:
   release-version-bump:
     runs-on: ubuntu-latest
+    # permissions required for secrets.BUMP_N_RELEASE token:
+    #   contents: write # to `git push` and create releases
+    #   pull-requests: read # to read PR info when regenerating the changelog
     steps:
-      - name: checkout ${{ inputs.repo }}
+      - name: Checkout ${{ inputs.repo }}
         uses: actions/checkout@v6
         with:
+          persist-credentials: true # needed for `git push`
           repository: nRF24/${{ inputs.repo }}
           ref: ${{ inputs.branch }}
           fetch-depth: 0
           path: ${{ inputs.repo }}
           token: ${{ secrets.BUMP_N_RELEASE }}
 
-      - name: checkout org repo
+      - name: Checkout org repo
         uses: actions/checkout@v6
         with:
+          persist-credentials: false
           path: org-repo
 
       - uses: actions/setup-python@v6
         with:
-          # here we need v3.10+
-          python-version: 3.x
-
-      - run: rustup update --no-self-update
-
-      - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@main
+          python-version: ">=3.10"
 
       - name: Install git-cliff
-        run: cargo binstall -y git-cliff --install-path org-repo
+        run: pip install -r org-repo/.github/requirements.txt
 
-      - name: increment version
+      - name: Increment version
         working-directory: ${{ inputs.repo }}
         id: inc-ver
+        env:
+          # needed by git-cliff to regenerate changelog
+          GITHUB_TOKEN: ${{ secrets.BUMP_N_RELEASE }}
+          BUMP_COMPONENT: ${{ inputs.bump-component }}
         run: >-
-          python "../org-repo/.github/workflows/increment_version.py"
-          --bump=${{ inputs.bump-component }}
+          python "../org-repo/.github/increment_version.py"
+          --bump="${BUMP_COMPONENT}"
           --update-metadata
 
-      - name: push metadata changes
+      - name: Push metadata changes
         working-directory: ${{ inputs.repo }}
         if: steps.inc-ver.outputs.made-changes == 'true'
+        env:
+          TAG: v${{ steps.inc-ver.outputs.new-version }}
         run: |-
           git config --global user.name "${GITHUB_ACTOR}"
           git config --global user.email "${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
           git add --all
-          git commit -m "bump version to v${{ steps.inc-ver.outputs.new-version }}"
+          git commit -m "bump version to ${TAG}"
           git push
 
-      - name: publish release
+      - name: Publish release
         env:
           GH_TOKEN: ${{ secrets.BUMP_N_RELEASE }}
+          REPO: nRF24/${{ inputs.repo }}
+          BRANCH: ${{ inputs.branch }}
+          TAG: v${{ steps.inc-ver.outputs.new-version }}
+          NOTES: ${{ steps.inc-ver.outputs.release-notes }}
         run: >-
-          gh release create
-          v${{ steps.inc-ver.outputs.new-version }}
-          --notes-file ${{ steps.inc-ver.outputs.release-notes }}
-          --repo nRF24/${{ inputs.repo }}
-          --target ${{ inputs.branch }}
-          --title v${{ steps.inc-ver.outputs.new-version }}
+          gh release create "${TAG}"
+          --notes-file "${NOTES}"
+          --repo "${REPO}"
+          --target "${BRANCH}"
+          --title "${TAG}"

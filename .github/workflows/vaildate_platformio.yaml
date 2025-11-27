@@ -1,0 +1,51 @@
+name: Package PlatformIO
+
+on:
+  workflow_call:
+    secrets:
+      PLATFORMIO_AUTH_TOKEN:
+        required: false
+
+permissions: {}
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: get lib info
+        id: lib-info
+        run: >-
+          echo "release=$(awk
+          -F "=" '/version/ {print $2}'
+          library.properties)" >> "${GITHUB_OUTPUT}"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.x
+
+      - name: Install PlatformIO
+        run: pip install --upgrade platformio
+
+      - name: package lib
+        env:
+          PIO_PKG_NAME: PlatformIO-${{ github.event.repository.name }}-${{ steps.lib-info.outputs.release }}.tar.gz
+        run: pio package pack -o "${PIO_PKG_NAME}"
+
+      - name: Save artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: PIO_pkg_${{ github.event.repository.name }}
+          path: PlatformIO*.tar.gz
+
+      - name: Upload package to PlatformIO Registry
+        # This step does not require any special github.token permissions.
+        # PIO lib packages cannot be re-published under the same tag.
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
+        run: pio package publish --owner nrf24 --non-interactive
