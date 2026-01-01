@@ -13,7 +13,7 @@ jobs:
       contents: write
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           # This pattern downloads any artifacts built for armhf or arm64 targets.
           # However, it also downloads artifacts built against pigpio and MRAA drivers.
