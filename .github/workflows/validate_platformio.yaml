@@ -5,12 +5,6 @@ on:
     secrets:
       PLATFORMIO_AUTH_TOKEN:
         required: false
-    inputs:
-      # Add this block:
-      build_flags:
-        description: 'Optional build flags for PlatformIO'
-        required: false
-        type: string
         
 permissions: {}
 
