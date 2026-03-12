@@ -27,5 +27,5 @@ jobs:
           TAG: ${{ github.ref_name }}
         # Only upload artifacts that were built against RPi and SPIDEV drivers.
         run: |-
-          files=$(ls artifacts/*RPi*.deb artifacts/*SPIDEV*.deb artifacts/*RPi*.rpm artifacts/*SPIDEV*.rpm)
+          files=$(ls artifacts/*.deb artifacts/*.rpm)
           gh release upload "${TAG}" ${files}
