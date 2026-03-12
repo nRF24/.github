@@ -33,7 +33,11 @@ on:
         type: string
         default: master
         description: git ref of the RF24Mesh lib dependency
-
+      build_flags:
+        description: 'Optional build flags for PlatformIO'
+        required: false
+        type: string
+        
 permissions: {}
 
 jobs:
