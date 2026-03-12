@@ -47,5 +47,5 @@ jobs:
         # PIO lib packages cannot be re-published under the same tag.
         if: startsWith(github.ref, 'refs/tags/')
         env:
-          PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
+          PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }} # zizmor: ignore[secrets-outside-env]
         run: pio package publish --owner nrf24 --non-interactive

@@ -53,7 +53,7 @@ jobs:
           ref: ${{ inputs.branch }}
           fetch-depth: 0
           path: ${{ inputs.repo }}
-          token: ${{ secrets.BUMP_N_RELEASE }}
+          token: ${{ secrets.BUMP_N_RELEASE }} # zizmor: ignore[secrets-outside-env]
 
       - name: Checkout org repo
         uses: actions/checkout@v6
@@ -73,7 +73,7 @@ jobs:
         id: inc-ver
         env:
           # needed by git-cliff to regenerate changelog
-          GITHUB_TOKEN: ${{ secrets.BUMP_N_RELEASE }}
+          GITHUB_TOKEN: ${{ secrets.BUMP_N_RELEASE }} # zizmor: ignore[secrets-outside-env]
           BUMP_COMPONENT: ${{ inputs.bump-component }}
         run: >-
           python "../org-repo/.github/increment_version.py"
@@ -94,7 +94,7 @@ jobs:
 
       - name: Publish release
         env:
-          GH_TOKEN: ${{ secrets.BUMP_N_RELEASE }}
+          GH_TOKEN: ${{ secrets.BUMP_N_RELEASE }} # zizmor: ignore[secrets-outside-env]
           REPO: nRF24/${{ inputs.repo }}
           BRANCH: ${{ inputs.branch }}
           TAG: v${{ steps.inc-ver.outputs.new-version }}
