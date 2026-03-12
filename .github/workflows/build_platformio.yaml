@@ -9,6 +9,15 @@ on:
       board-id:
         required: true
         type: string
+      build-flags:
+        default: ""
+        required: false
+        type: string
+        description: |
+          A space delimited string of build flags to pass to the `pio ci command`.
+          This value is passed as env var PLATFORMIO_BUILD_FLAGS.
+          See docs at
+             https://docs.platformio.org/en/latest/envvars.html#envvar-PLATFORMIO_BUILD_FLAGS
       lib-deps:
         required: false
         type: string
@@ -63,6 +72,7 @@ jobs:
 
       - name: Get lib info
         id: lib-info
+        shell: bash
         env:
           REPO_NAME: ${{ github.event.repository.name }}
         run: |-
@@ -79,12 +89,14 @@ jobs:
 
       - name: Install extra dependencies
         if: inputs.lib-deps != ''
+        shell: bash
         env:
           LIB_DEPS: ${{ inputs.lib-deps }}
         run: pio pkg install -g ${LIB_DEPS}
 
       - name: Install RF24Mesh library dependency
         if: contains(steps.lib-info.outputs.rf24-deps, 'RF24Mesh') && !endsWith(github.repository, 'RF24Mesh')
+        shell: bash
         env:
           RF24MESH_REF: ${{ inputs.rf24mesh-ref }}
         run: >-
@@ -93,6 +105,7 @@ jobs:
 
       - name: Install RF24Network library dependency
         if: contains(steps.lib-info.outputs.rf24-deps, 'RF24Network') && !endsWith(github.repository, 'RF24Network')
+        shell: bash
         env:
           RF24NETWORK_REF: ${{ inputs.rf24network-ref }}
         run: >-
@@ -107,7 +120,15 @@ jobs:
           pio pkg install -g -f --skip-dependencies
           -l "https://github.com/nRF24/RF24.git#${RF24_REF}"
 
+      - name: Inject build flags into env
+        if: inputs.build-flags != ''
+        shell: bash
+        env:
+          BUILD_FLAGS: ${{ inputs.build-flags }}
+        run: echo "PLATFORMIO_BUILD_FLAGS=${BUILD_FLAGS}" >> "${GITHUB_ENV}"
+
       - name: Run PlatformIO
+        shell: bash
         env:
           PLATFORMIO_CI_SRC: ${{ inputs.example-path }}
           BOARD: ${{ inputs.board-id }}
