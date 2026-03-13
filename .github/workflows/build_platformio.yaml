@@ -46,7 +46,7 @@ on:
         description: 'Optional build flags for PlatformIO'
         required: false
         type: string
-        
+
 permissions: {}
 
 jobs:
@@ -94,31 +94,32 @@ jobs:
           LIB_DEPS: ${{ inputs.lib-deps }}
         run: pio pkg install -g ${LIB_DEPS}
 
-      - name: Install RF24Mesh library dependency
+      - name: Checkout RF24Mesh library dependency
         if: contains(steps.lib-info.outputs.rf24-deps, 'RF24Mesh') && !endsWith(github.repository, 'RF24Mesh')
-        shell: bash
-        env:
-          RF24MESH_REF: ${{ inputs.rf24mesh-ref }}
-        run: >-
-          pio pkg install -g -f --skip-dependencies
-          -l "https://github.com/nRF24/RF24Mesh.git#${RF24MESH_REF}"
+        uses: actions/checkout@v6
+        with:
+          path: RF24Mesh
+          repository: nRF24/RF24Mesh
+          ref: ${{ inputs.rf24mesh-ref }}
+          persist-credentials: false
 
-      - name: Install RF24Network library dependency
+      - name: Checkout RF24Network library dependency
         if: contains(steps.lib-info.outputs.rf24-deps, 'RF24Network') && !endsWith(github.repository, 'RF24Network')
-        shell: bash
-        env:
-          RF24NETWORK_REF: ${{ inputs.rf24network-ref }}
-        run: >-
-          pio pkg install -g -f --skip-dependencies
-          -l "https://github.com/nRF24/RF24Network.git#${RF24NETWORK_REF}"
+        uses: actions/checkout@v6
+        with:
+          path: RF24Network
+          repository: nRF24/RF24Network
+          ref: ${{ inputs.rf24network-ref }}
+          persist-credentials: false
 
-      - name: Install RF24 library dependency
+      - name: Checkout RF24 library dependency
         if: endsWith(github.repository, 'RF24') == false
-        env:
-          RF24_REF: ${{ inputs.rf24-ref }}
-        run: >-
-          pio pkg install -g -f --skip-dependencies
-          -l "https://github.com/nRF24/RF24.git#${RF24_REF}"
+        uses: actions/checkout@v6
+        with:
+          path: RF24
+          repository: nRF24/RF24
+          ref: ${{ inputs.rf24-ref }}
+          persist-credentials: false
 
       - name: Inject build flags into env
         if: inputs.build-flags != ''
@@ -132,4 +133,10 @@ jobs:
         env:
           PLATFORMIO_CI_SRC: ${{ inputs.example-path }}
           BOARD: ${{ inputs.board-id }}
-        run: pio ci --lib="." --board="${BOARD}"
+        run: >-
+          pio ci
+          --board="${BOARD}"
+          --lib="."
+          ${{ !endsWith(github.repository, 'RF24') && '--lib=../RF24' || '' }}
+          ${{ contains(steps.lib-info.outputs.rf24-deps, 'RF24Network') && '--lib=../RF24Network' || ''}}
+          ${{ contains(steps.lib-info.outputs.rf24-deps, 'RF24Mesh') && '--lib=../RF24Mesh' || ''}}
