@@ -55,6 +55,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          path: project
           persist-credentials: false
 
       # - name: Cache pip
@@ -130,6 +131,7 @@ jobs:
 
       - name: Run PlatformIO
         shell: bash
+        working-directory: project
         env:
           PLATFORMIO_CI_SRC: ${{ inputs.example-path }}
           BOARD: ${{ inputs.board-id }}
