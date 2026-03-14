@@ -51,10 +51,7 @@ permissions: {}
 
 jobs:
   run_pio:
-    # We must use a windows runner because ESP SDK ships with pre-compiled libs.
-    # These pre-compiled libs come with LwIP lib (used by RF24Ethernet) included,
-    # but LwIP lib is disabled by default on Linux builds.
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
