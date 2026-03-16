@@ -23,6 +23,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.ref_name }}
+          GH_REPO: nRF24/${{ github.event.repository.name }}
         run: |- 
           files=$(ls artifacts/PlatformIO*.tar.gz)
-          gh release upload "${TAG}" ${files}
+          gh release upload "${TAG}" --repo "${GH_REPO}" ${files}
