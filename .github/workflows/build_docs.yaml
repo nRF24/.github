@@ -7,6 +7,10 @@ on:
         required: false
         type: string
         default: '1.9.6'
+      install-graphviz:
+        required: false
+        type: boolean
+        default: false
 
 permissions: {}
 
@@ -54,6 +58,10 @@ jobs:
           tar xf doxygen.tar
           cd "doxygen-${DOXYGEN_VERSION}"
           sudo make install
+
+      - name: Install Graphviz
+        if: inputs.install-graphviz == true
+        run: sudo apt-get install -y graphviz
 
       - uses: actions/checkout@v6
         with:
