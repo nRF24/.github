@@ -241,7 +241,7 @@ jobs:
         run: sudo cpack
 
       - name: Save artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: pkg_${{ github.event.repository.name }}_${{ inputs.compiler }}_${{ inputs.driver }}
           path: |-
