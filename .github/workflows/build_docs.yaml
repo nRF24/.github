@@ -80,7 +80,7 @@ jobs:
         working-directory: docs
 
       - name: Upload github pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           name: ${{ github.event.repository.name }}_doxygen_docs
           path: ${{ github.workspace }}/docs/html
