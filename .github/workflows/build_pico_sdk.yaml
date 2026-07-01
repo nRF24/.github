@@ -51,7 +51,7 @@ jobs:
           echo "deps=${lib_deps}" >> "${GITHUB_OUTPUT}"
 
       - name: Checkout RF24 lib
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
           repository: nRF24/RF24
@@ -60,7 +60,7 @@ jobs:
 
       - name: Checkout RF24Network lib
         if: contains(steps.lib-info.outputs.deps, 'RF24Network') || endsWith(github.repository, 'RF24Network')
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
           repository: nRF24/RF24Network
@@ -69,7 +69,7 @@ jobs:
 
       - name: Checkout RF24Mesh lib
         if: endsWith(github.repository, 'RF24Mesh')
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
           path: RF24Mesh
@@ -84,7 +84,7 @@ jobs:
           build-essential
 
       - name: Clone pico-sdk
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
           repository: raspberrypi/pico-sdk

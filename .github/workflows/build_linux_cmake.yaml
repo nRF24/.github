@@ -86,7 +86,7 @@ jobs:
           echo "deps=$lib_deps" >> "${GITHUB_OUTPUT}"
 
       - name: Checkout RF24
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
           repository: nRF24/RF24
@@ -160,7 +160,7 @@ jobs:
 
       - name: Checkout RF24Network
         if: contains(steps.lib-info.outputs.deps, 'RF24Network') || endsWith(github.repository, 'RF24Network')
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
           repository: nRF24/RF24Network
@@ -183,7 +183,7 @@ jobs:
 
       - name: Checkout RF24Mesh repo
         if: contains(steps.lib-info.outputs.deps, 'RF24Mesh') || endsWith(github.repository, 'RF24Mesh')
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
           repository: nRF24/RF24Mesh
@@ -206,7 +206,7 @@ jobs:
 
       - name: Checkout RF24Gateway repo
         if: endsWith(github.repository, 'RF24Gateway')
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
           repository: nRF24/RF24Gateway
