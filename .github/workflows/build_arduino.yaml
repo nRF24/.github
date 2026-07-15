@@ -85,9 +85,11 @@ jobs:
           echo "report-name=${FQBN}" | tr : - >> "${GITHUB_OUTPUT}"
 
       - name: Compile examples
-        uses: arduino/compile-sketches@8ac27e99289705c4abec832089575d687b859227 # v1.1.2
+        uses: 2bndy5/arduino-compile-sketches@558c3a56bc28ceee3efb0ed83b187f08f4a5d29e # v0.1.3
+        env:
+          # spell-checker: disable-next-line
+          CLICOLOR_FORCE: 1
         with:
-          # cli-version: '0.33.0'
           sketch-paths: ${{ inputs.sketch-paths }}
           fqbn: ${{ inputs.fqbn }}
           libraries: ${{ inputs.libraries }}
