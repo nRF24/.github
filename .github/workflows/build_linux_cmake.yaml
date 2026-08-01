@@ -302,7 +302,7 @@ jobs:
 
       - name: Set up Python version used by boost.python
         if: inputs.compiler == 'default' && inputs.py-wrapper-path != ''
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ steps.symlink-boost-python.outputs.python-version }}
 
