@@ -16,6 +16,8 @@ permissions: {}
 
 jobs:
   cpp_linter:
+    env:
+      CLANG_FORMAT_VERSION: 19
     runs-on: ubuntu-latest
     permissions:
       # allow cpp-linter to post suggestions in PR reviews
@@ -30,7 +32,7 @@ jobs:
         with:
           python-version: 3.x
       - name: Install clang-format
-        run: sudo apt-get install clang-format-14
+        run: sudo apt-get install -y clang-format-${CLANG_FORMAT_VERSION}
       - name: Install linter python package
         run: python3 -m pip install 'cpp-linter>=1.7.1'
       - name: Run cpp-linter (python package)
@@ -41,7 +43,7 @@ jobs:
           EXTENSIONS: ${{ inputs.extensions }}
         run: >-
           cpp-linter
-          --version=14
+          --version=${CLANG_FORMAT_VERSION}
           --style=file
           --tidy-checks='-*'
           --lines-changed-only=true
@@ -52,4 +54,6 @@ jobs:
           --step-summary=true
       - name: Linter checks failed?
         if: steps.linter.outputs.checks-failed > 0
-        run: exit 1
+        run: |-
+          echo "format checks failed: ${{ steps.linter.outputs.checks-failed }}"
+          exit 1
