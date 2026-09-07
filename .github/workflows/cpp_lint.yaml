@@ -54,6 +54,8 @@ jobs:
           --step-summary=true
       - name: Linter checks failed?
         if: steps.linter.outputs.checks-failed > 0
+        env:
+          CHECKS_FAILED: ${{ steps.linter.outputs.checks-failed }}
         run: |-
-          echo "format checks failed: ${{ steps.linter.outputs.checks-failed }}"
+          echo "format checks failed: ${CHECKS_FAILED}"
           exit 1
