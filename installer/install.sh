@@ -13,6 +13,8 @@ DO_INSTALL=("0" "0" "0" "0")
 CHOOSE_VERSION="N"
 EXAMPLE_PATH=("examples_linux" "examples_RPi" "examples_RPi" "examples")
 SUGGESTED_EXAMPLE=("gettingstarted" "helloworld_tx" "RF24Mesh_Example_Master" "RF24Gateway_ncurses")
+CMAKE_OPTIONS=("" "" "" "")
+USE_CCM="N"
 
 # TODO Remove this when ready for master branches (or improve it via CLI args)
 BRANCHES=("master" "master" "master" "master")
@@ -58,6 +60,34 @@ do
         * ) ;;
     esac
 done
+
+if [[ ${DO_INSTALL[1]} > 0 || ${DO_INSTALL[2]} > 0 || ${DO_INSTALL[3]} > 0 ]]
+then
+    echo $'\n'"AES-CCM encryption lets Linux nodes communicate with nRF52840 nodes using nrf_to_nrf encryption."
+    echo "RF24Network, RF24Mesh and RF24Gateway must all be built with it for RF24Gateway to use it."
+    read -p "Build with CCM encryption support (RF24NETWORK_CCM) [y/N]? " USE_CCM
+    case ${USE_CCM^^} in
+        Y ) CMAKE_OPTIONS[1]="-DRF24NETWORK_CCM=ON"
+            CMAKE_OPTIONS[2]="-DRF24NETWORK_CCM=ON"
+            CMAKE_OPTIONS[3]="-DRF24NETWORK_CCM=ON"
+            # Replacing only the header would leave the installed RF24Network lib built from a different
+            # RF24CCM.h than everything compiled after it, so reinstall RF24Network instead
+            if [[ ${DO_INSTALL[1]} = 0 ]]
+            then
+                if [[ ! -f "/usr/local/include/RF24Network/RF24CCM.h" ]]
+                then
+                    echo "The installed RF24Network has no CCM support. Adding RF24Network to the installation."
+                    DO_INSTALL[1]=1
+                elif [[ -f "$ROOT_PATH/RF24Network/RF24CCM.h" ]] && ! cmp -s "$ROOT_PATH/RF24Network/RF24CCM.h" "/usr/local/include/RF24Network/RF24CCM.h"
+                then
+                    echo "The installed RF24CCM.h differs from $ROOT_PATH/RF24Network/RF24CCM.h. Adding RF24Network to the installation."
+                    DO_INSTALL[1]=1
+                fi
+            fi
+            ;;
+        * ) ;;
+    esac
+fi
 
 if [[ ${DO_INSTALL[0]} > 0 ]]
 then
@@ -137,7 +167,7 @@ install_repo() {
     git checkout ${BRANCHES[$1]}
     if [[ -f "CMakeLists.txt" ]]; then
         create_build_env
-        cmake ..
+        cmake .. ${CMAKE_OPTIONS[$1]}
     elif [[ -f "configure" ]]; then
         ./configure --driver=$RF24_DRIVER
     fi
@@ -150,6 +180,24 @@ install_repo() {
     then
         echo "Installing lib ${REPOS[$1]} failed. Quiting now."
         exit 1
+    fi
+    # RF24Mesh, RF24Gateway and gateway programs compile against the installed RF24CCM.h,
+    # so it must be the same file the RF24Network lib was just built from
+    if [[ ${USE_CCM^^} = "Y" && ${REPOS[$1]} = "RF24Network" ]]
+    then
+        SRC_CCM="$ROOT_PATH/RF24Network/RF24CCM.h"
+        DST_CCM="/usr/local/include/RF24Network/RF24CCM.h"
+        if ! cmp -s "$SRC_CCM" "$DST_CCM"
+        then
+            echo "Installed $DST_CCM does not match $SRC_CCM. Replacing it."
+            sudo rm -f "$DST_CCM"
+            if ! sudo install -D -m 644 "$SRC_CCM" "$DST_CCM" || ! cmp -s "$SRC_CCM" "$DST_CCM"
+            then
+                echo "Replacing $DST_CCM failed. Quiting now."
+                exit 1
+            fi
+        fi
+        echo "Verified the installed RF24CCM.h matches $SRC_CCM"
     fi
     CWD=$(pwd)
     if [[ "$CWD" != "*/build" ]]; then
