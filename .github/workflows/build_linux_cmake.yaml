@@ -125,24 +125,25 @@ jobs:
       #     cd WiringPi
       #     ./build
 
-      - name: Provide pigpio
-        if: inputs.driver == 'pigpio'
-        env:
-          # this env var is supported as of CMake v3.29+
-          CMAKE_INSTALL_PREFIX: /usr/${{ inputs.usr-dir }}
-          # this env var is supported as of CMake v3.21+
-          CMAKE_TOOLCHAIN_FILE: ${{ github.workspace }}/RF24/cmake/toolchains/${{ inputs.compiler }}.cmake
-        run: |-
-          git clone https://github.com/joan2937/pigpio.git
-          cd pigpio
-          git fetch --tags
-          latestTag=$(git describe --tags `git rev-list --tags --max-count=1`)
-          git checkout $latestTag
-          mkdir build
-          cd build
-          cmake .. 
-          make
-          sudo make install
+      # NOTE: pigpio no longer builds with newer versions of CMake (v4.4.4+)
+      # - name: Provide pigpio
+      #   if: inputs.driver == 'pigpio'
+      #   env:
+      #     # this env var is supported as of CMake v3.29+
+      #     CMAKE_INSTALL_PREFIX: /usr/${{ inputs.usr-dir }}
+      #     # this env var is supported as of CMake v3.21+
+      #     CMAKE_TOOLCHAIN_FILE: ${{ github.workspace }}/RF24/cmake/toolchains/${{ inputs.compiler }}.cmake
+      #   run: |-
+      #     git clone https://github.com/joan2937/pigpio.git
+      #     cd pigpio
+      #     git fetch --tags
+      #     latestTag=$(git describe --tags `git rev-list --tags --max-count=1`)
+      #     git checkout $latestTag
+      #     mkdir build
+      #     cd build
+      #     cmake .. 
+      #     make
+      #     sudo make install
 
       - name: Build & install RF24
         if: endsWith(github.repository, 'RF24') == false
