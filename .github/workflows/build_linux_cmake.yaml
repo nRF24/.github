@@ -105,7 +105,7 @@ jobs:
           cd mraa
           mkdir build
           cd build
-          cmake .. -D BUILDSWIGNODE=OFF
+          cmake .. -D BUILDSWIGNODE=OFF -DBUILDSWIGPYTHON=OFF
           sudo make install
 
       - name: Provide WiringPi
